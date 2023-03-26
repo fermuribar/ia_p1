@@ -9,7 +9,7 @@ Action ComportamientoJugador::think(Sensores sensores){
 	Action accion = actIDLE;
 
 	// Determinar el efecto de la ultima accion enviada y actualiza las variables estado
-	//if(!sensores.colision && !sensores.vida){	//no del tuto
+	if(!sensores.colision && !sensores.reset){	//no del tuto
 		//Captura de current_state anterior
 		int orientacion_tem = current_state.brujula;
 		int fil_tem = current_state.fil;
@@ -64,7 +64,9 @@ Action ComportamientoJugador::think(Sensores sensores){
 		if(bien_situado){
 			mapaResultado[current_state.fil][current_state.col] = sensores.terreno[0];
 		}
-	//}
+	}else{
+		bien_situado = false;
+	}
 
 	// Determinar la siguiente accion a realizar:
 	if((sensores.terreno[2]=='T' or sensores.terreno[2]=='S' or sensores.terreno[2]=='G') and sensores.superficie[2]=='_'){
