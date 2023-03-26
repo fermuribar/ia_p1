@@ -21,6 +21,7 @@ class ComportamientoJugador : public Comportamiento{
       current_state.fil = current_state.col = 99;
       current_state.brujula = norte;
       last_action = actIDLE;  
+      giro_derecha =false;
     }
 
     ComportamientoJugador(const ComportamientoJugador & comport) : Comportamiento(comport){}
@@ -36,6 +37,7 @@ class ComportamientoJugador : public Comportamiento{
     //tutorial:
   state current_state;
   Action last_action;
+  bool giro_derecha;
   
 
 };

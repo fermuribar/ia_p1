@@ -54,8 +54,12 @@ Action ComportamientoJugador::think(Sensores sensores){
 	// Determinar la siguiente accion a realizar:
 	if((sensores.terreno[2]=='T' or sensores.terreno[2]=='S') and sensores.superficie[2]=='_'){
 		accion = actFORWARD;
-	}else{
+	}else if(!giro_derecha){
 		accion = actTURN_SL;
+		giro_derecha = (rand()%2 == 0);
+	}else{
+		accion = actTURN_SR;
+		giro_derecha = (rand()%2 == 0);
 	}
 
 	//recordar la ultima accion:
