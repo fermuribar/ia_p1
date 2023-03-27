@@ -62,7 +62,7 @@ Action ComportamientoJugador::think(Sensores sensores){
 
 		// Acutalizacion de mapaResultado
 		if(bien_situado){
-			mapaResultado[current_state.fil][current_state.col] = sensores.terreno[0];
+			act_mapaResul(sensores);
 		}
 	}else{
 		bien_situado = false;
@@ -87,4 +87,84 @@ Action ComportamientoJugador::think(Sensores sensores){
 
 int ComportamientoJugador::interact(Action accion, int valor){
   return false;
+}
+
+void ComportamientoJugador::act_mapaResul(Sensores sensores){
+	char casilla;
+	int fil = current_state.fil, col = current_state.col;
+	mapaResultado[fil][col] = sensores.terreno[0];
+	for(int i = 1; i < sensores.terreno.size(); i++){
+		casilla = sensores.terreno[i];
+		switch (current_state.brujula){
+			case norte: 
+				if(i==1){
+					fil = current_state.fil-1;
+					col = current_state.col-1;
+				}else if(i==4){
+					fil = current_state.fil-2;
+					col = current_state.col-2;
+				}else if(i==9){
+					fil = current_state.fil-3;
+					col = current_state.col-3;
+				}else{
+					col++;
+				}
+				mapaResultado[fil][col] = casilla;
+				break;
+			case noreste:
+				
+				break;
+			case este: 
+				if(i==1){
+					fil = current_state.fil-1;
+					col = current_state.col+1;
+				}else if(i==4){
+					fil = current_state.fil-2;
+					col = current_state.col+2;
+				}else if(i==9){
+					fil = current_state.fil-3;
+					col = current_state.col+3;
+				}else{
+					fil++;
+				}
+				mapaResultado[fil][col] = casilla;
+			break;
+			case sureste: 
+				break;
+			case sur: 
+				if(i==1){
+					fil = current_state.fil+1;
+					col = current_state.col+1;
+				}else if(i==4){
+					fil = current_state.fil+2;
+					col = current_state.col+2;
+				}else if(i==9){
+					fil = current_state.fil+3;
+					col = current_state.col+3;
+				}else{
+					col--;
+				}
+				mapaResultado[fil][col] = casilla;
+				break;
+			case suroeste: 
+				break;
+			case oeste: 
+				if(i==1){
+					fil = current_state.fil+1;
+					col = current_state.col-1;
+				}else if(i==4){
+					fil = current_state.fil+2;
+					col = current_state.col-2;
+				}else if(i==9){
+					fil = current_state.fil+3;
+					col = current_state.col-3;
+				}else{
+					fil--;
+				}
+				mapaResultado[fil][col] = casilla;
+				break;
+			case noroeste: 
+				break;
+		}
+	}
 }

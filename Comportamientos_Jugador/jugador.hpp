@@ -32,6 +32,9 @@ class ComportamientoJugador : public Comportamiento{
     int interact(Action accion, int valor);
 
   private:
+
+  // Declarar aquí los metodos
+  void act_mapaResul(Sensores sensores);
   
   // Declarar aquí las variables de estado
 
