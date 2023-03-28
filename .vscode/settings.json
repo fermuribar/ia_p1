@@ -1,6 +1,6 @@
 {
     "files.associations": {
         "iosfwd": "cpp",
-        "random": "cpp"
+        "ostream": "cpp"
     }
 }
