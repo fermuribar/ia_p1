@@ -19,7 +19,7 @@ if [ "$1" = "clean" ]; then
 fi
 
 echo "Instalando dependencias..."
-dpkg -s python3.8 > /dev/null || sudo apt install python3.8
+python3 -c 'import sys; assert sys.version_info[:][1] >= 8' || (echo "Instalando python3.8..." && sudo apt install software-properties-common && sudo add-apt-repository ppa:deadsnakes/ppa && sudo apt install python3.8 && sudo ln -s /usr/bin/python3.8 /usr/bin/python3) || exit 1
 
 echo "Eliminando archivos de compilación..."
 rm -r build CMakeCache.txt CMakeFiles cmake_install.cmake Makefile practica1 practica1SG 2> /dev/null
@@ -54,7 +54,7 @@ fi
 echo "Running tests..."
 # LEADERBOARD_NAME=$LEADERBOARD_NAME LEADERBOARD_GROUP=$LEADERBOARD_GROUP LEADERBOARD_URL=$LEADERBOARD_URL python3 leaderboard.py
 
-LEADERBOARD_NAME=$LEADERBOARD_NAME LEADERBOARD_GROUP=$LEADERBOARD_GROUP LEADERBOARD_URL=$LEADERBOARD_URL COMMITS_LIST=$COMMITS_LIST python3.8 - <<END
+LEADERBOARD_NAME=$LEADERBOARD_NAME LEADERBOARD_GROUP=$LEADERBOARD_GROUP LEADERBOARD_URL=$LEADERBOARD_URL COMMITS_LIST=$COMMITS_LIST python3 - <<END
 import subprocess
 import os
 import time
