@@ -53,7 +53,7 @@ Action ComportamientoJugador::think(Sensores sensores){
 		current_state.brujula = static_cast<Orientacion>(orientacion_tem);
 
 		// Actualizacion de posiciones
-		if(sensores.terreno[0]=='G' and !bien_situado){
+		if(sensores.terreno[0]=='G' or sensores.posF != -1){
 			current_state.fil = sensores.posF;
 			current_state.col = sensores.posC;
 			current_state.brujula = sensores.sentido;
@@ -90,81 +90,74 @@ int ComportamientoJugador::interact(Action accion, int valor){
 }
 
 void ComportamientoJugador::act_mapaResul(Sensores sensores){
-	char casilla;
-	int fil = current_state.fil, col = current_state.col;
-	mapaResultado[fil][col] = sensores.terreno[0];
-	for(int i = 1; i < sensores.terreno.size(); i++){
-		casilla = sensores.terreno[i];
-		switch (current_state.brujula){
-			case norte: 
-				if(i==1){
-					fil = current_state.fil-1;
-					col = current_state.col-1;
-				}else if(i==4){
-					fil = current_state.fil-2;
-					col = current_state.col-2;
-				}else if(i==9){
-					fil = current_state.fil-3;
-					col = current_state.col-3;
-				}else{
-					col++;
-				}
-				mapaResultado[fil][col] = casilla;
-				break;
-			case noreste:
-				
-				break;
-			case este: 
-				if(i==1){
-					fil = current_state.fil-1;
-					col = current_state.col+1;
-				}else if(i==4){
-					fil = current_state.fil-2;
-					col = current_state.col+2;
-				}else if(i==9){
-					fil = current_state.fil-3;
-					col = current_state.col+3;
-				}else{
-					fil++;
-				}
-				mapaResultado[fil][col] = casilla;
-			break;
-			case sureste: 
-				break;
-			case sur: 
-				if(i==1){
-					fil = current_state.fil+1;
-					col = current_state.col+1;
-				}else if(i==4){
-					fil = current_state.fil+2;
-					col = current_state.col+2;
-				}else if(i==9){
-					fil = current_state.fil+3;
-					col = current_state.col+3;
-				}else{
-					col--;
-				}
-				mapaResultado[fil][col] = casilla;
-				break;
-			case suroeste: 
-				break;
-			case oeste: 
-				if(i==1){
-					fil = current_state.fil+1;
-					col = current_state.col-1;
-				}else if(i==4){
-					fil = current_state.fil+2;
-					col = current_state.col-2;
-				}else if(i==9){
-					fil = current_state.fil+3;
-					col = current_state.col-3;
-				}else{
-					fil--;
-				}
-				mapaResultado[fil][col] = casilla;
-				break;
-			case noroeste: 
-				break;
-		}
+	int fil = current_state.fil , col = current_state.col;
+    int f = fil, c = col;
+	Orientacion ori = current_state.brujula;
+    for(int i = 0; i < sensores.terreno.size(); i++){
+        if(i==0) mapaResultado[fil][col] = sensores.terreno[i];
+        if(ori == norte or ori == este or ori == sur or ori == oeste){
+            if(i>=1 and i<4){
+                f = (ori == norte or ori == este)?(fil-1):(fil+1);
+                c = (ori == norte or ori == oeste)?(col-1):(col+1);
+                if (ori == norte) c = c + i - 1;
+                if (ori == este) f = f + i - 1;
+                if (ori == sur) c = c - i + 1;
+                if (ori == oeste) f = f - i + 1;
+            }
+            if(i>=4 and i<9){
+                f = (ori == norte or ori == este)?(fil-2):(fil+2);
+                c = (ori == norte or ori == oeste)?(col-2):(col+2);
+                if (ori == norte) c = c + i - 4;
+                if (ori == este) f = f + i - 4;
+                if (ori == sur) c = c - i + 4;
+                if (ori == oeste) f = f - i + 4;
+            }
+            if(i>=9){
+                f = (ori == norte or ori == este)?(fil-3):(fil+3);
+                c = (ori == norte or ori == oeste)?(col-3):(col+3);
+                if (ori == norte) c = c + i - 9;
+                if (ori == este) f = f + i - 9;
+                if (ori == sur) c = c - i + 9;
+                if (ori == oeste) f = f - i + 9;
+            }
+        }else{
+            if(i>=1 and i<4){
+                if(i==1){
+                    f = (ori == sureste or ori == noroeste)? fil :(ori == noreste)?(fil-1):(fil+1);
+                    c = (ori == noreste or ori == suroeste)? col :(ori == noroeste)?(col-1):(col+1);
+                }else if(i<=2){
+                    (ori == noreste) ? c++ : (ori == suroeste) ? c-- : c;
+                    (ori == sureste) ? f++ : (ori == noroeste) ? f-- : f;
+                }else{
+                    (ori == noreste)? f++ : (ori == suroeste) ? f-- : f;
+                    (ori == noroeste) ? c++ : (ori == sureste) ? c-- : c;
+                }
+            }
+            if(i>=4 and i<9){
+                if(i==4){
+                    f = (ori == sureste or ori == noroeste)? fil :(ori == noreste)?(fil-2):(fil+2);
+                    c = (ori == noreste or ori == suroeste)? col :(ori == noroeste)?(col-2):(col+2);
+                }else if(i<=6){
+                    (ori == noreste) ? c++ : (ori == suroeste) ? c-- : c;
+                    (ori == sureste) ? f++ : (ori == noroeste) ? f-- : f;
+                }else{
+                    (ori == noreste)? f++ : (ori == suroeste) ? f-- : f;
+                    (ori == noroeste) ? c++ : (ori == sureste) ? c-- : c;
+                }
+            }
+            if(i>=9){
+                if(i==9){
+                    f = (ori == sureste or ori == noroeste)? fil :(ori == noreste)?(fil-3):(fil+3);
+                    c = (ori == noreste or ori == suroeste)? col :(ori == noroeste)?(col-3):(col+3);
+                }else if(i<=12){
+                    (ori == noreste) ? c++ : (ori == suroeste) ? c-- : c;
+                    (ori == sureste) ? f++ : (ori == noroeste) ? f-- : f;
+                }else{
+                    (ori == noreste)? f++ : (ori == suroeste) ? f-- : f;
+                    (ori == noroeste) ? c++ : (ori == sureste) ? c-- : c;
+                }
+            }
+        }
+        mapaResultado[f][c] = sensores.terreno[i];
 	}
 }
