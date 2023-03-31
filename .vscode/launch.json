@@ -12,12 +12,12 @@
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "build",
             // set environment variables
-            // "environment": [
-            //     {
-            //         "name": "DISPLAY",
-            //         "value": ":1.0"
-            //     }
-            // ],
+             "environment": [
+                 {
+                     "name": "DISPLAY",
+                     "value": ":1.0"
+                 }
+             ],
             
         }
     ]
