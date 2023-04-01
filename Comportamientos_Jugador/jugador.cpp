@@ -54,15 +54,22 @@ Action ComportamientoJugador::think(Sensores sensores){
 
 		// Actualizacion de posiciones
 		if(sensores.terreno[0]=='G' or sensores.posF != -1){
+			//actualiza el mapa resultado con lo que vio el agente antes de encontrar casilla G
+			act_visto(sensores);
+			//...
 			current_state.fil = sensores.posF;
 			current_state.col = sensores.posC;
 			current_state.brujula = sensores.sentido;
 			bien_situado = true;
+			
+
 		}
 
 		// Acutalizacion de mapaResultado
 		if(bien_situado){
-			act_mapaResul(sensores);
+			act_mapas(sensores, true);
+		}else{
+			act_mapas(sensores, false);
 		}
 	}else{
 		bien_situado = false;
@@ -89,12 +96,27 @@ int ComportamientoJugador::interact(Action accion, int valor){
   return false;
 }
 
-void ComportamientoJugador::act_mapaResul(Sensores sensores){
+void ComportamientoJugador::act_visto(Sensores sensores){
+	int diff_fil = current_state.fil - sensores.posF;
+	int diff_col = current_state.col - sensores.posC;
+	int tam_map = mapaResultado.size();
+	for(int i = 0; i < tam_map; i++){
+		for (int j = 0; j < tam_map; j++){
+			if(visto_sin_bien_situado[i + diff_fil][j + diff_col] != '?'){
+				mapaResultado[i][j] = visto_sin_bien_situado[i + diff_fil][j + diff_col];
+				visto_sin_bien_situado[i + diff_fil][j + diff_col] = '?';
+			}
+		}
+		
+	}
+}
+
+void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 	int fil = current_state.fil , col = current_state.col;
     int f = fil, c = col;
 	Orientacion ori = current_state.brujula;
     for(int i = 0; i < sensores.terreno.size(); i++){
-        if(i==0) mapaResultado[fil][col] = sensores.terreno[i];
+        if(i==0) (situado) ? (mapaResultado[fil][col] = sensores.terreno[i]) : (visto_sin_bien_situado[fil][col] = sensores.terreno[i]);
         if(ori == norte or ori == este or ori == sur or ori == oeste){
             if(i>=1 and i<4){
                 f = (ori == norte or ori == este)?(fil-1):(fil+1);
@@ -158,6 +180,6 @@ void ComportamientoJugador::act_mapaResul(Sensores sensores){
                 }
             }
         }
-        mapaResultado[f][c] = sensores.terreno[i];
+        (situado) ? (mapaResultado[f][c] = sensores.terreno[i]) : (visto_sin_bien_situado[f][c] = sensores.terreno[i]);
 	}
 }
