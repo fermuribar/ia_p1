@@ -2,7 +2,12 @@
 #include <iostream>
 using namespace std;
 
-
+/*
+----------------------------------------------THINK---------------------------------------------------------------------------------------
+->Metodo principal 
+-->Analisis y tratamiento de accion anterior y sensores
+--->Decidir accion
+*/
 
 Action ComportamientoJugador::think(Sensores sensores){
 
@@ -40,15 +45,7 @@ Action ComportamientoJugador::think(Sensores sensores){
 	}
 
 	// Determinar la siguiente accion a realizar:
-	if((sensores.terreno[2]=='T' or sensores.terreno[2]=='S' or sensores.terreno[2]=='G') and sensores.superficie[2]=='_'){
-		accion = actFORWARD;
-	}else if(!giro_derecha){
-		accion = actTURN_SL;
-		giro_derecha = (rand()%2 == 0);
-	}else{
-		accion = actTURN_SR;
-		giro_derecha = (rand()%2 == 0);
-	}
+	accion = decide_accion(sensores);
 
 	//recordar la ultima accion:
 	last_action = accion;
@@ -60,12 +57,19 @@ int ComportamientoJugador::interact(Action accion, int valor){
   return false;
 }
 
+/*
+----------------------------------------------ACTUALIZA DATOS---------------------------------------------------------------------------------------
+-->analisis y tratamiento de accion anterior y sensores
+*/
+
+//Borra todo lo visto sin estar bien posicionado (en caso de muerte)
 void ComportamientoJugador::borra_visto(){
 	for(int i = 0; i < visto_sin_bien_situado.size(); i++)
 		for(int j = 0; j< visto_sin_bien_situado.size(); j++)
 			visto_sin_bien_situado[i][j] = '?';
 }
 
+//Actualiza la posicion en funcion de la orientacion y accion anterior
 void ComportamientoJugador::act_posi(){
 	//Captura de current_state anterior
 	int orientacion_tem = current_state.brujula;
@@ -110,6 +114,7 @@ void ComportamientoJugador::act_posi(){
 	current_state.brujula = static_cast<Orientacion>(orientacion_tem);
 }
 
+//Plasma lo visto antes de posicionarse correctamente
 void ComportamientoJugador::act_visto(Sensores sensores){
 	int diff_fil = current_state.fil - sensores.posF;
 	int diff_col = current_state.col - sensores.posC;
@@ -125,6 +130,7 @@ void ComportamientoJugador::act_visto(Sensores sensores){
 	}
 }
 
+//Gestionde la vision tanto bien posicionado como no
 void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 	int fil = current_state.fil , col = current_state.col;
     int f = fil, c = col;
@@ -196,4 +202,24 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
         }
         (situado) ? (mapaResultado[f][c] = sensores.terreno[i]) : (visto_sin_bien_situado[f][c] = sensores.terreno[i]);
 	}
+}
+
+
+/*
+----------------------------------------------COMPORTAMIENTO---------------------------------------------------------------------------------------
+--->Decidir accion
+*/
+
+Action ComportamientoJugador::decide_accion(Sensores sensores){
+	Action accion;
+	if((sensores.terreno[2]=='T' or sensores.terreno[2]=='S' or sensores.terreno[2]=='G') and sensores.superficie[2]=='_'){
+		accion = actFORWARD;
+	}else if(!giro_derecha){
+		accion = actTURN_SL;
+		giro_derecha = (rand()%2 == 0);
+	}else{
+		accion = actTURN_SR;
+		giro_derecha = (rand()%2 == 0);
+	}
+	return accion;
 }

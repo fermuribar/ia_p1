@@ -47,6 +47,8 @@ class ComportamientoJugador : public Comportamiento{
   void act_posi();
   void act_visto(Sensores sensores);
   void act_mapas(Sensores sensores, bool situado);
+
+  Action decide_accion(Sensores sensores);
   
   
   // Declarar aquí las variables de estado
