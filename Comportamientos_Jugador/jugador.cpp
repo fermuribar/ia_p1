@@ -130,7 +130,7 @@ void ComportamientoJugador::act_visto(Sensores sensores){
 	}
 }
 
-//Gestionde la vision tanto bien posicionado como no
+//Gestion de la vision bien posicionado y no bien posicionado
 void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 	int fil = current_state.fil , col = current_state.col;
     int f = fil, c = col;
@@ -210,6 +210,7 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 --->Decidir accion
 */
 
+//decide que accion tomar
 Action ComportamientoJugador::decide_accion(Sensores sensores){
 	Action accion;
 	if((sensores.terreno[2]=='T' or sensores.terreno[2]=='S' or sensores.terreno[2]=='G') and sensores.superficie[2]=='_'){
