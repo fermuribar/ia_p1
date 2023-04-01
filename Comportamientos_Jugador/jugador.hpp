@@ -42,8 +42,12 @@ class ComportamientoJugador : public Comportamiento{
   private:
 
   // Declarar aquí los metodos
-  void act_mapas(Sensores sensores, bool situado);
+  void borra_visto();
+
+  void act_posi();
   void act_visto(Sensores sensores);
+  void act_mapas(Sensores sensores, bool situado);
+  
   
   // Declarar aquí las variables de estado
 

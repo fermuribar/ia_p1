@@ -10,49 +10,11 @@ Action ComportamientoJugador::think(Sensores sensores){
 
 	// Determinar el efecto de la ultima accion enviada y actualiza las variables estado
 	if(!sensores.colision && !sensores.reset){	//no del tuto
-		//Captura de current_state anterior
-		int orientacion_tem = current_state.brujula;
-		int fil_tem = current_state.fil;
-		int col_tem = current_state.col;
-
-		switch (last_action){
-			case actFORWARD:
-				// Actualizacion en caso de avanzar
-				switch (orientacion_tem){
-					case norte: fil_tem--; break;
-					case noreste: fil_tem--; col_tem++;	break;
-					case este: col_tem++; break;
-					case sureste: fil_tem++; col_tem++; break;
-					case sur: fil_tem++; break;
-					case suroeste: fil_tem++; col_tem--; break;
-					case oeste: col_tem--; break;
-					case noroeste: fil_tem--; col_tem--; break;
-				
-				}
-				break;
-			case actTURN_SL:
-				// Actualizacion en caso de girar 45º a la izquierda
-				orientacion_tem = (orientacion_tem+7)%8;
-				break;
-			case actTURN_SR:
-				// Actualizacion en caso de girar 45º a la derecha
-				orientacion_tem = (orientacion_tem+1)%8;
-				break;
-			case actTURN_BL:
-				// Actualizacion en caso de girar 135º a la izquierda
-				orientacion_tem = (orientacion_tem+3)%8;
-				break;
-			case actTURN_BR:
-				// Actualizacion en caso de girar 135º a la derecha
-				orientacion_tem = (orientacion_tem+5)%8;
-				break;
-			}
-		// Actualizacion de current_state
-		current_state.fil = fil_tem;
-		current_state.col = col_tem;
-		current_state.brujula = static_cast<Orientacion>(orientacion_tem);
-
+		
 		// Actualizacion de posiciones
+		act_posi();
+
+		//encuentra posicion original
 		if(sensores.terreno[0]=='G' or sensores.posF != -1){
 			//actualiza el mapa resultado con lo que vio el agente antes de encontrar casilla G
 			act_visto(sensores);
@@ -61,18 +23,20 @@ Action ComportamientoJugador::think(Sensores sensores){
 			current_state.col = sensores.posC;
 			current_state.brujula = sensores.sentido;
 			bien_situado = true;
-			
-
 		}
 
-		// Acutalizacion de mapaResultado
+		// Actualizacion de mapaResultado
 		if(bien_situado){
 			act_mapas(sensores, true);
 		}else{
 			act_mapas(sensores, false);
 		}
-	}else{
+	}else if(sensores.reset){
 		bien_situado = false;
+		current_state.fil = current_state.col = mapaResultado.size() - 1; 
+		current_state.brujula = norte;
+		last_action = actIDLE;
+		borra_visto();
 	}
 
 	// Determinar la siguiente accion a realizar:
@@ -94,6 +58,56 @@ Action ComportamientoJugador::think(Sensores sensores){
 
 int ComportamientoJugador::interact(Action accion, int valor){
   return false;
+}
+
+void ComportamientoJugador::borra_visto(){
+	for(int i = 0; i < visto_sin_bien_situado.size(); i++)
+		for(int j = 0; j< visto_sin_bien_situado.size(); j++)
+			visto_sin_bien_situado[i][j] = '?';
+}
+
+void ComportamientoJugador::act_posi(){
+	//Captura de current_state anterior
+	int orientacion_tem = current_state.brujula;
+	int fil_tem = current_state.fil;
+	int col_tem = current_state.col;
+
+	switch (last_action){
+		case actFORWARD:
+			// Actualizacion en caso de avanzar
+			switch (orientacion_tem){
+				case norte: fil_tem--; break;
+				case noreste: fil_tem--; col_tem++;	break;
+				case este: col_tem++; break;
+				case sureste: fil_tem++; col_tem++; break;
+				case sur: fil_tem++; break;
+				case suroeste: fil_tem++; col_tem--; break;
+				case oeste: col_tem--; break;
+				case noroeste: fil_tem--; col_tem--; break;
+			
+			}
+			break;
+		case actTURN_SL:
+			// Actualizacion en caso de girar 45º a la izquierda
+			orientacion_tem = (orientacion_tem+7)%8;
+			break;
+		case actTURN_SR:
+			// Actualizacion en caso de girar 45º a la derecha
+			orientacion_tem = (orientacion_tem+1)%8;
+			break;
+		case actTURN_BL:
+			// Actualizacion en caso de girar 135º a la izquierda
+			orientacion_tem = (orientacion_tem+3)%8;
+			break;
+		case actTURN_BR:
+			// Actualizacion en caso de girar 135º a la derecha
+			orientacion_tem = (orientacion_tem+5)%8;
+			break;
+		}
+	// Actualizacion de current_state
+	current_state.fil = fil_tem;
+	current_state.col = col_tem;
+	current_state.brujula = static_cast<Orientacion>(orientacion_tem);
 }
 
 void ComportamientoJugador::act_visto(Sensores sensores){
