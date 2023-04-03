@@ -123,16 +123,16 @@ int ComportamientoJugador::valor_casilla(unsigned char c){
 		valor = 1;
 		break;
 	case 'S':
-		valor = 10;
+		valor = 1;
 		break;
 	case 'T':
-		valor = 11;
+		valor = 2;
 		break;
 	case 'B':
-		valor = 1000;
+		valor = 3;
 		break;
 	case 'A':
-		valor = 2000;
+		valor = 4;
 		break;
 	case 'M': case 'P':
 		valor = 10000;
