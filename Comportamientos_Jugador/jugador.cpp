@@ -114,6 +114,33 @@ void ComportamientoJugador::act_posi(){
 	current_state.brujula = static_cast<Orientacion>(orientacion_tem);
 }
 
+//Define la puntuacion de cada casilla solo basandose en el tipo de casilla
+int ComportamientoJugador::valor_casilla(unsigned char c){
+	int valor;
+	switch (c)
+	{
+	case 'G': case 'K': case 'D': case 'X':
+		valor = 1;
+		break;
+	case 'S':
+		valor = 10;
+		break;
+	case 'T':
+		valor = 11;
+		break;
+	case 'B':
+		valor = 1000;
+		break;
+	case 'A':
+		valor = 2000;
+		break;
+	case 'M': case 'P':
+		valor = 10000;
+		break;
+	}
+	return valor;
+}
+
 //Plasma lo visto antes de posicionarse correctamente
 void ComportamientoJugador::act_visto(Sensores sensores){
 	int diff_fil = current_state.fil - sensores.posF;
@@ -130,13 +157,29 @@ void ComportamientoJugador::act_visto(Sensores sensores){
 	}
 }
 
-//Gestionde la vision tanto bien posicionado como no
+//Gestion de la vision tanto bien posicionado como no
 void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 	int fil = current_state.fil , col = current_state.col;
     int f = fil, c = col;
 	Orientacion ori = current_state.brujula;
     for(int i = 0; i < sensores.terreno.size(); i++){
-        if(i==0) (situado) ? (mapaResultado[fil][col] = sensores.terreno[i]) : (visto_sin_bien_situado[fil][col] = sensores.terreno[i]);
+        if(i==0){
+			if(situado){
+				if(mapaResultado[fil][col] != sensores.terreno[i]){
+					mapaResultado[fil][col] = sensores.terreno[i];
+					mapaConPlan[fil][col] = valor_casilla(sensores.terreno[i]);
+				}else{
+					mapaConPlan[fil][col]++;
+				}
+			}else{
+				if(visto_sin_bien_situado[fil][col] != sensores.terreno[i]){
+					visto_sin_bien_situado[fil][col] = sensores.terreno[i];
+					plan_sin_bien_situado[fil][col] = valor_casilla(sensores.terreno[i]);
+				}else{
+					plan_sin_bien_situado[fil][col]++;
+				}
+			}
+		} 
         if(ori == norte or ori == este or ori == sur or ori == oeste){
             if(i>=1 and i<4){
                 f = (ori == norte or ori == este)?(fil-1):(fil+1);
@@ -200,9 +243,25 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
                 }
             }
         }
-        (situado) ? (mapaResultado[f][c] = sensores.terreno[i]) : (visto_sin_bien_situado[f][c] = sensores.terreno[i]);
+		if(situado){
+			if(mapaResultado[f][c] != sensores.terreno[i]){
+				mapaResultado[f][c] = sensores.terreno[i];
+				mapaConPlan[f][c] = valor_casilla(sensores.terreno[i]);
+			}else{
+				mapaConPlan[f][c]++;
+			}
+		}else{
+			if(visto_sin_bien_situado[f][c] != sensores.terreno[i]){
+				visto_sin_bien_situado[f][c] = sensores.terreno[i];
+				plan_sin_bien_situado[f][c] = valor_casilla(sensores.terreno[i]);
+			}else{
+				plan_sin_bien_situado[f][c]++;
+			}
+		}
 	}
 }
+
+
 
 
 /*
@@ -210,16 +269,198 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 --->Decidir accion
 */
 
+//Decide la accion a tomar
 Action ComportamientoJugador::decide_accion(Sensores sensores){
 	Action accion;
-	if((sensores.terreno[2]=='T' or sensores.terreno[2]=='S' or sensores.terreno[2]=='G') and sensores.superficie[2]=='_'){
-		accion = actFORWARD;
-	}else if(!giro_derecha){
-		accion = actTURN_SL;
-		giro_derecha = (rand()%2 == 0);
+	if((sensores.terreno[2]!='M' and sensores.terreno[2]!='P') and sensores.superficie[2]=='_'){
+		accion = suma_puntuaciones();
 	}else{
-		accion = actTURN_SR;
-		giro_derecha = (rand()%2 == 0);
+		accion = actTURN_SL;
 	}
 	return accion;
 }
+
+Action ComportamientoJugador::suma_puntuaciones(){
+	int recto = 0, der_s = 0, izq_s = 0, der_l = 0, izq_l = 0;
+	int n = 0,ne = 0,e = 0,se = 0,s = 0,so = 0,o = 0,no = 0;
+	int f,c;
+	Action accion;
+
+	//suma norte
+	f=current_state.fil-1;
+	c=current_state.col;
+	for(int i = 0; i < 10; i++){
+		if (f>=0)
+			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
+				n += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
+			else
+				i = 20; //apaga bucle
+		else i=20;
+		f--;
+	}
+
+	//suma noreste
+	f=current_state.fil-1;
+	c=current_state.col+1;
+	for(int i = 0; i < 10; i++){
+		if(f>=0 and  (bien_situado) ? c < mapaConPlan.size() : c < plan_sin_bien_situado.size())
+			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') ) )
+				ne += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
+			else
+				i = 20; //apaga bucle
+		else i = 20;
+		f--;
+		c++;
+	}
+
+	//suma este
+	f=current_state.fil;
+	c=current_state.col+1;
+	for(int i = 0; i < 10; i++){
+		if((bien_situado) ? c<mapaConPlan.size() : c<plan_sin_bien_situado.size()  )
+			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') ) )
+				e += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
+			else
+				i = 20; //apaga bucle
+		else i=20;
+		c++;
+	}
+
+	//suma sureste
+	f=current_state.fil+1;
+	c=current_state.col+1;
+	for(int i = 0; i < 10; i++){
+		if ( ((bien_situado) ? f<mapaConPlan.size() : f<plan_sin_bien_situado.size()) and ((bien_situado) ? c<mapaConPlan.size() : c<plan_sin_bien_situado.size()) )
+			if( ( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
+				se += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
+			else
+				i = 20; //apaga bucle
+		else i = 20;
+		f++;
+		c++;
+	}
+
+	//suma sur
+	f=current_state.fil+1;
+	c=current_state.col;
+	for(int i = 0; i < 10; i++){
+		if((bien_situado) ? f<mapaConPlan.size() : f<plan_sin_bien_situado.size() )
+			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') ) )
+				s += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
+			else
+				i = 20; //apaga bucle
+		else i = 20;
+		f++;
+	}
+
+	//suroeste
+	f=current_state.fil+1;
+	c=current_state.col-1;
+	for(int i = 0; i < 10; i++){
+		if((bien_situado) ? f<mapaConPlan.size() : f<plan_sin_bien_situado.size() and c>=0)
+			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
+				so += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
+			else
+				i = 20; //apaga bucle
+		else i = 20;
+		f++;
+		c--;
+	}
+
+	//oeste
+	f=current_state.fil;
+	c=current_state.col-1;
+	for(int i = 0; i < 10; i++){
+		if(c>=0)
+			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
+				o += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
+			else
+				i = 20; //apaga bucle
+		else i = 20;
+		c--;
+	}
+
+	//noroeste
+	f=current_state.fil-1;
+	c=current_state.col-1;
+	for(int i = 0; i < 10; i++){
+		if(f>=0 and c>=0)
+			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
+				no += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
+			else
+				i = 20; //apaga bucle
+		else i = 20;
+		f--;
+		c--;
+	}
+	switch (current_state.brujula){
+	case norte:
+		recto = n;
+		der_s = ne;
+		izq_s = no;
+		der_l = se;
+		izq_l = so;
+		break;
+	case noreste:
+		recto = no;
+		der_s = e;
+		izq_s = n;
+		der_l = s;
+		izq_l = o;
+		break;
+	case este:
+		recto = e;
+		der_s = se;
+		izq_s = ne;
+		der_l = so;
+		izq_l = no;
+		break;
+	case sureste:
+		recto = se;
+		der_s = s;
+		izq_s = e;
+		der_l = o;
+		izq_l = n;
+		break;
+	case sur:
+		recto = s;
+		der_s = so;
+		izq_s = se;
+		der_l = no;
+		izq_l = ne;
+		break;
+	case suroeste:
+		recto = so;
+		der_s = o;
+		izq_s = e;
+		der_l = n;
+		izq_l = e;
+		break;
+	case oeste:
+		recto = o;
+		der_s = no;
+		izq_s = so;
+		der_l = ne;
+		izq_l = se;
+		break;
+	case noroeste:
+		recto = no;
+		der_s = n;
+		izq_s = o;
+		der_l = e;
+		izq_l = s;
+		break;
+	}
+	if(recto >= der_s and recto >= izq_s and recto >= der_l and recto >= izq_l){
+		accion = actFORWARD;
+	}else if(der_s >= izq_s and der_s >= der_l and der_s>= izq_l){
+		accion = actTURN_SR;
+	}else if( izq_s >= der_l and izq_s >= izq_l){
+		accion = actTURN_SL;
+	}else if(der_l >= izq_l){
+		accion = actTURN_BR;
+	}else{
+		accion = actTURN_BL;
+	}
+	return accion;
+ }

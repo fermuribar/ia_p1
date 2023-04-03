@@ -3,6 +3,7 @@
         "iosfwd": "cpp",
         "ostream": "cpp",
         "chrono": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "random": "cpp"
     }
 }

@@ -21,14 +21,16 @@ class ComportamientoJugador : public Comportamiento{
       current_state.fil = current_state.col = mapaResultado.size() - 1; // la posicion sin estar posicionado por defecto es en el centro del mapa visto_sin_bien_situado
       current_state.brujula = norte;
       last_action = actIDLE;  
-      giro_derecha = false;
+      //giro_derecha = false;
       bien_situado = false;
         //fin tuto
       //incicio mapa sin bien situado todo desconocido ?
       vector<unsigned char> aux(mapaResultado.size() * 2, '?');
+      vector<int> aux2(mapaResultado.size() * 2, 0);
       for (size_t i = 0; i < mapaResultado.size() * 2; i++)
       {
         visto_sin_bien_situado.push_back(aux);
+        plan_sin_bien_situado.push_back(aux2);
       }
       
     }
@@ -45,10 +47,14 @@ class ComportamientoJugador : public Comportamiento{
   void borra_visto();
 
   void act_posi();
+  int valor_casilla(unsigned char c);
   void act_visto(Sensores sensores);
   void act_mapas(Sensores sensores, bool situado);
 
+  
+
   Action decide_accion(Sensores sensores);
+  Action suma_puntuaciones();
   
   
   // Declarar aquí las variables de estado
@@ -56,11 +62,12 @@ class ComportamientoJugador : public Comportamiento{
     //tutorial:
   state current_state;
   Action last_action;
-  bool giro_derecha;
+  //bool giro_derecha;
   bool bien_situado;
     //fint tuto
 
   vector< vector<unsigned char> > visto_sin_bien_situado;
+  vector< vector<int> > plan_sin_bien_situado;
   
 
 };
