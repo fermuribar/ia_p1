@@ -25,7 +25,8 @@ class ComportamientoJugador : public Comportamiento{
       //giro_derecha = false;
       bien_situado = false;
         //fin tuto
-      //incicio mapa sin bien situado todo desconocido ?
+
+      //incicio mapas axiliares
       vector<int> aux(mapaResultado.size(),0);
       vector<unsigned char> aux1(mapaResultado.size() * 2, '?');
       vector<int> aux2(mapaResultado.size() * 2, 0);
@@ -33,6 +34,26 @@ class ComportamientoJugador : public Comportamiento{
       for (size_t i = 0; i < mapaResultado.size() * 2; i++){
         visto_sin_bien_situado.push_back(aux1);
         plan_sin_bien_situado.push_back(aux2);
+      }
+
+      //defino el precipicio exteriror
+      for(int i = 0; i < mapaResultado.size(); i++){
+        //borde superiror
+        mapaResultado[0][i] = 'P';
+        mapaResultado[1][i] = 'P';
+        mapaResultado[2][i] = 'P';
+        //borde inferiror
+        mapaResultado[mapaResultado.size()-3][i] = 'P';
+        mapaResultado[mapaResultado.size()-2][i] = 'P';
+        mapaResultado[mapaResultado.size()-1][i] = 'P';
+        //borde izq
+        mapaResultado[i][0] = 'P';
+        mapaResultado[i][1] = 'P';
+        mapaResultado[i][2] = 'P';
+        //borde der
+        mapaResultado[i][mapaResultado.size()-3] = 'P';
+        mapaResultado[i][mapaResultado.size()-2] = 'P';
+        mapaResultado[i][mapaResultado.size()-1] = 'P';
       }
       
     }
