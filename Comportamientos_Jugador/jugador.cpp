@@ -299,16 +299,16 @@ void ComportamientoJugador::marca_camino(){
 //Decide la accion a tomar
 Action ComportamientoJugador::decide_accion(Sensores sensores){
 	Action accion;
-	//if(sensores.terreno[0] != 'X'  and sensores.superficie[2]=='_'){
-	//	accion = suma_puntuaciones();
-	//}else{
-	//	if(sensores.superficie[2]!='_')
-	//		accion = actIDLE;
-	//	else if((sensores.terreno[0] == 'X' and sensores.bateria < 4000))
-	//		accion = actIDLE;
-	//	else 
+	if(sensores.terreno[0] != 'X'  and sensores.superficie[2]=='_'){
+		accion = suma_puntuaciones();
+	}else{
+		if(sensores.superficie[2]!='_')
+			accion = actIDLE;
+		else if((sensores.terreno[0] == 'X' and sensores.bateria < 5000))
+			accion = actIDLE;
+		else 
 			accion = suma_puntuaciones();
-	//}
+	}
 	return accion;
 }
 
