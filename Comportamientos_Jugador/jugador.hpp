@@ -2,6 +2,7 @@
 #define COMPORTAMIENTOJUGADOR_H
 
 #include "comportamientos/comportamiento.hpp"
+#include <stack>
 using namespace std;
 
   //tutorial
@@ -25,11 +26,12 @@ class ComportamientoJugador : public Comportamiento{
       bien_situado = false;
         //fin tuto
       //incicio mapa sin bien situado todo desconocido ?
-      vector<unsigned char> aux(mapaResultado.size() * 2, '?');
+      vector<int> aux(mapaResultado.size(),0);
+      vector<unsigned char> aux1(mapaResultado.size() * 2, '?');
       vector<int> aux2(mapaResultado.size() * 2, 0);
-      for (size_t i = 0; i < mapaResultado.size() * 2; i++)
-      {
-        visto_sin_bien_situado.push_back(aux);
+      for( int i = 0;i < mapaResultado.size(); i++)  plan_bien_situado.push_back(aux);
+      for (size_t i = 0; i < mapaResultado.size() * 2; i++){
+        visto_sin_bien_situado.push_back(aux1);
         plan_sin_bien_situado.push_back(aux2);
       }
       
@@ -66,9 +68,12 @@ class ComportamientoJugador : public Comportamiento{
   bool bien_situado;
     //fint tuto
 
+  
+  vector< vector<int> > plan_bien_situado;
   vector< vector<unsigned char> > visto_sin_bien_situado;
   vector< vector<int> > plan_sin_bien_situado;
   
+  stack<int> pila_fil, pila_col;
 
 };
 

@@ -33,8 +33,10 @@ Action ComportamientoJugador::think(Sensores sensores){
 		// Actualizacion de mapaResultado
 		if(bien_situado){
 			act_mapas(sensores, true);
+			plan_bien_situado[current_state.fil][current_state.col]++;
 		}else{
 			act_mapas(sensores, false);
+			plan_sin_bien_situado[current_state.fil][current_state.col]++;
 		}
 	}else if(sensores.reset){
 		bien_situado = false;
@@ -142,7 +144,7 @@ int ComportamientoJugador::valor_casilla(unsigned char c){
 }
 
 //Plasma lo visto antes de posicionarse correctamente
-void ComportamientoJugador::act_visto(Sensores sensores){
+void ComportamientoJugador::act_visto(Sensores sensores){			
 	int diff_fil = current_state.fil - sensores.posF;
 	int diff_col = current_state.col - sensores.posC;
 	int tam_map = mapaResultado.size();
@@ -151,6 +153,10 @@ void ComportamientoJugador::act_visto(Sensores sensores){
 			if(visto_sin_bien_situado[i + diff_fil][j + diff_col] != '?'){
 				mapaResultado[i][j] = visto_sin_bien_situado[i + diff_fil][j + diff_col];
 				visto_sin_bien_situado[i + diff_fil][j + diff_col] = '?';
+			}
+			if(plan_sin_bien_situado[i+diff_fil][j+diff_col] != 0){
+				plan_bien_situado[i][j] = plan_sin_bien_situado[i + diff_fil][j + diff_col];
+				plan_sin_bien_situado[i + diff_fil][j + diff_col] = 0;
 			}
 		}
 		
@@ -167,16 +173,16 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 			if(situado){
 				if(mapaResultado[fil][col] != sensores.terreno[i]){
 					mapaResultado[fil][col] = sensores.terreno[i];
-					mapaConPlan[fil][col] = valor_casilla(sensores.terreno[i]);
+					plan_bien_situado[fil][col] = valor_casilla(sensores.terreno[i]);
 				}else{
-					mapaConPlan[fil][col]++;
+					//plan_bien_situado[fil][col]++;
 				}
 			}else{
 				if(visto_sin_bien_situado[fil][col] != sensores.terreno[i]){
 					visto_sin_bien_situado[fil][col] = sensores.terreno[i];
 					plan_sin_bien_situado[fil][col] = valor_casilla(sensores.terreno[i]);
 				}else{
-					plan_sin_bien_situado[fil][col]++;
+					//plan_sin_bien_situado[fil][col]++;
 				}
 			}
 		} 
@@ -246,16 +252,16 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 		if(situado){
 			if(mapaResultado[f][c] != sensores.terreno[i]){
 				mapaResultado[f][c] = sensores.terreno[i];
-				mapaConPlan[f][c] = valor_casilla(sensores.terreno[i]);
+				plan_bien_situado[f][c] = valor_casilla(sensores.terreno[i]);
 			}else{
-				mapaConPlan[f][c]++;
+				//plan_bien_situado[f][c]++;
 			}
 		}else{
 			if(visto_sin_bien_situado[f][c] != sensores.terreno[i]){
 				visto_sin_bien_situado[f][c] = sensores.terreno[i];
 				plan_sin_bien_situado[f][c] = valor_casilla(sensores.terreno[i]);
 			}else{
-				plan_sin_bien_situado[f][c]++;
+				//plan_sin_bien_situado[f][c]++;
 			}
 		}
 	}
@@ -282,118 +288,19 @@ Action ComportamientoJugador::decide_accion(Sensores sensores){
 
 Action ComportamientoJugador::suma_puntuaciones(){
 	int recto = 0, der_s = 0, izq_s = 0, der_l = 0, izq_l = 0;
-	int n = 0,ne = 0,e = 0,se = 0,s = 0,so = 0,o = 0,no = 0;
-	int f,c;
+	int n = 0,ne = 0,e = 0,se = 0,s = 0,so = 0,o = 0, no = 0;
+	int f = current_state.fil, c = current_state.col;
 	Action accion;
-
-	//suma norte
-	f=current_state.fil-1;
-	c=current_state.col;
-	for(int i = 0; i < 10; i++){
-		if (f>=0)
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
-				n += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i=20;
-		f--;
-	}
-
-	//suma noreste
-	f=current_state.fil-1;
-	c=current_state.col+1;
-	for(int i = 0; i < 10; i++){
-		if(f>=0 and  (bien_situado) ? c < mapaConPlan.size() : c < plan_sin_bien_situado.size())
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') ) )
-				ne += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		f--;
-		c++;
-	}
-
-	//suma este
-	f=current_state.fil;
-	c=current_state.col+1;
-	for(int i = 0; i < 10; i++){
-		if((bien_situado) ? c<mapaConPlan.size() : c<plan_sin_bien_situado.size()  )
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') ) )
-				e += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i=20;
-		c++;
-	}
-
-	//suma sureste
-	f=current_state.fil+1;
-	c=current_state.col+1;
-	for(int i = 0; i < 10; i++){
-		if ( ((bien_situado) ? f<mapaConPlan.size() : f<plan_sin_bien_situado.size()) and ((bien_situado) ? c<mapaConPlan.size() : c<plan_sin_bien_situado.size()) )
-			if( ( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
-				se += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		f++;
-		c++;
-	}
-
-	//suma sur
-	f=current_state.fil+1;
-	c=current_state.col;
-	for(int i = 0; i < 10; i++){
-		if((bien_situado) ? f<mapaConPlan.size() : f<plan_sin_bien_situado.size() )
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') ) )
-				s += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		f++;
-	}
-
-	//suroeste
-	f=current_state.fil+1;
-	c=current_state.col-1;
-	for(int i = 0; i < 10; i++){
-		if((bien_situado) ? f<mapaConPlan.size() : f<plan_sin_bien_situado.size() and c>=0)
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
-				so += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		f++;
-		c--;
-	}
-
-	//oeste
-	f=current_state.fil;
-	c=current_state.col-1;
-	for(int i = 0; i < 10; i++){
-		if(c>=0)
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
-				o += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		c--;
-	}
-
-	//noroeste
-	f=current_state.fil-1;
-	c=current_state.col-1;
-	for(int i = 0; i < 10; i++){
-		if(f>=0 and c>=0)
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
-				no += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		f--;
-		c--;
-	}
-	switch (current_state.brujula){
+	n = (bien_situado) ? plan_bien_situado[f - 1][c]: plan_sin_bien_situado[f - 1][c];
+	ne = (bien_situado) ? plan_bien_situado[f - 1][c + 1]: plan_sin_bien_situado[f - 1][c + 1];
+	e = (bien_situado) ? plan_bien_situado[f][c + 1]: plan_sin_bien_situado[f][c + 1];
+	se = (bien_situado) ? plan_bien_situado[f + 1][c + 1]: plan_sin_bien_situado[f + 1][c + 1];
+	s = (bien_situado) ? plan_bien_situado[f + 1][c]: plan_sin_bien_situado[f + 1][c];
+	so = (bien_situado) ? plan_bien_situado[f + 1][c - 1]: plan_sin_bien_situado[f + 1][c - 1];
+	o = (bien_situado) ? plan_bien_situado[f][c - 1]: plan_sin_bien_situado[f][c - 1];
+	no = (bien_situado) ? plan_bien_situado[f - 1][c - 1]: plan_sin_bien_situado[f - 1][c - 1];
+	switch (current_state.brujula)
+	{
 	case norte:
 		recto = n;
 		der_s = ne;
@@ -402,7 +309,7 @@ Action ComportamientoJugador::suma_puntuaciones(){
 		izq_l = so;
 		break;
 	case noreste:
-		recto = no;
+		recto = ne;
 		der_s = e;
 		izq_s = n;
 		der_l = s;
@@ -432,7 +339,7 @@ Action ComportamientoJugador::suma_puntuaciones(){
 	case suroeste:
 		recto = so;
 		der_s = o;
-		izq_s = e;
+		izq_s = s;
 		der_l = n;
 		izq_l = e;
 		break;
@@ -451,16 +358,18 @@ Action ComportamientoJugador::suma_puntuaciones(){
 		izq_l = s;
 		break;
 	}
-	if(recto >= der_s and recto >= izq_s and recto >= der_l and recto >= izq_l){
+
+	if(recto <= der_s and recto <= izq_s and recto <= der_l and recto <= izq_l){
 		accion = actFORWARD;
-	}else if(der_s >= izq_s and der_s >= der_l and der_s>= izq_l){
+	}else if(der_s <= izq_s and der_s <= der_l and der_s <= izq_l){
 		accion = actTURN_SR;
-	}else if( izq_s >= der_l and izq_s >= izq_l){
+	}else if(izq_s <= der_l and izq_s <= izq_l){
 		accion = actTURN_SL;
-	}else if(der_l >= izq_l){
+	}else if(der_l <= izq_l){
 		accion = actTURN_BR;
 	}else{
 		accion = actTURN_BL;
 	}
+	
 	return accion;
  }
