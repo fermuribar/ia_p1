@@ -33,11 +33,17 @@ Action ComportamientoJugador::think(Sensores sensores){
 		// Actualizacion de mapaResultado
 		if(bien_situado){
 			act_mapas(sensores, true);
-			plan_bien_situado[current_state.fil][current_state.col]++;
+			//plan_bien_situado[current_state.fil][current_state.col]++;
 		}else{
 			act_mapas(sensores, false);
-			plan_sin_bien_situado[current_state.fil][current_state.col]++;
+			//plan_sin_bien_situado[current_state.fil][current_state.col]++;
 		}
+
+		// Marca el camino por donde pasa
+		if(last_action == actFORWARD){
+			marca_camino();
+		}
+
 	}else if(sensores.reset){
 		bien_situado = false;
 		current_state.fil = current_state.col = mapaResultado.size() - 1; 
@@ -252,7 +258,37 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 	}
 }
 
-
+void ComportamientoJugador::marca_camino(){
+	int f = current_state.fil, c = current_state.col;
+	(bien_situado) ? plan_bien_situado[f][c]++ : plan_sin_bien_situado[f][c]++;
+	switch (current_state.brujula)
+	{
+	case norte: case sur:
+		(bien_situado) ? plan_bien_situado[f][c-1]++ : plan_sin_bien_situado[f][c-1]++;
+		(bien_situado) ? plan_bien_situado[f][c+1]++ : plan_sin_bien_situado[f][c+1]++;
+		break;
+	case este: case oeste:
+		(bien_situado) ? plan_bien_situado[f-1][c]++ : plan_sin_bien_situado[f-1][c]++;
+		(bien_situado) ? plan_bien_situado[f+1][c]++ : plan_sin_bien_situado[f+1][c]++;
+		break;
+	case noreste:
+		(bien_situado) ? plan_bien_situado[f][c-1]++ : plan_sin_bien_situado[f][c-1]++;
+		(bien_situado) ? plan_bien_situado[f+1][c]++ : plan_sin_bien_situado[f+1][c]++;
+		break;
+	case sureste:
+		(bien_situado) ? plan_bien_situado[f][c-1]++ : plan_sin_bien_situado[f][c-1]++;
+		(bien_situado) ? plan_bien_situado[f-1][c]++ : plan_sin_bien_situado[f-1][c]++;
+		break;
+	case suroeste:
+		(bien_situado) ? plan_bien_situado[f][c+1]++ : plan_sin_bien_situado[f][c+1]++;
+		(bien_situado) ? plan_bien_situado[f-1][c]++ : plan_sin_bien_situado[f-1][c]++;
+		break;
+	case noroeste:
+		(bien_situado) ? plan_bien_situado[f][c+1]++ : plan_sin_bien_situado[f][c+1]++;
+		(bien_situado) ? plan_bien_situado[f+1][c]++ : plan_sin_bien_situado[f+1][c]++;
+		break;
+	}
+}
 
 
 /*
@@ -263,11 +299,16 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 //Decide la accion a tomar
 Action ComportamientoJugador::decide_accion(Sensores sensores){
 	Action accion;
-	if((sensores.terreno[2]!='M' and sensores.terreno[2]!='P') and sensores.superficie[2]=='_'){
-		accion = suma_puntuaciones();
-	}else{
-		accion = actTURN_SL;
-	}
+	//if(sensores.terreno[0] != 'X'  and sensores.superficie[2]=='_'){
+	//	accion = suma_puntuaciones();
+	//}else{
+	//	if(sensores.superficie[2]!='_')
+	//		accion = actIDLE;
+	//	else if((sensores.terreno[0] == 'X' and sensores.bateria < 4000))
+	//		accion = actIDLE;
+	//	else 
+			accion = suma_puntuaciones();
+	//}
 	return accion;
 }
 

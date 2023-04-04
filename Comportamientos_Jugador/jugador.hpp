@@ -53,6 +53,8 @@ class ComportamientoJugador : public Comportamiento{
   void act_visto(Sensores sensores);
   void act_mapas(Sensores sensores, bool situado);
 
+  void marca_camino();
+
   
 
   Action decide_accion(Sensores sensores);
