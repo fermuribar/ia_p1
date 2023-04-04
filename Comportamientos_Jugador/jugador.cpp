@@ -67,8 +67,10 @@ int ComportamientoJugador::interact(Action accion, int valor){
 //Borra todo lo visto sin estar bien posicionado (en caso de muerte)
 void ComportamientoJugador::borra_visto(){
 	for(int i = 0; i < visto_sin_bien_situado.size(); i++)
-		for(int j = 0; j< visto_sin_bien_situado.size(); j++)
+		for(int j = 0; j< visto_sin_bien_situado.size(); j++){
 			visto_sin_bien_situado[i][j] = '?';
+			plan_sin_bien_situado[i][j] = 0;
+		}
 }
 
 //Actualiza la posicion en funcion de la orientacion y accion anterior
@@ -101,11 +103,11 @@ void ComportamientoJugador::act_posi(){
 			// Actualizacion en caso de girar 45º a la derecha
 			orientacion_tem = (orientacion_tem+1)%8;
 			break;
-		case actTURN_BL:
+		case actTURN_BR:
 			// Actualizacion en caso de girar 135º a la izquierda
 			orientacion_tem = (orientacion_tem+3)%8;
 			break;
-		case actTURN_BR:
+		case actTURN_BL: //change
 			// Actualizacion en caso de girar 135º a la derecha
 			orientacion_tem = (orientacion_tem+5)%8;
 			break;
@@ -131,10 +133,10 @@ int ComportamientoJugador::valor_casilla(unsigned char c){
 		valor = 2;
 		break;
 	case 'B':
-		valor = 3;
+		valor = 4;
 		break;
 	case 'A':
-		valor = 4;
+		valor = 10;
 		break;
 	case 'M': case 'P':
 		valor = 10000;
@@ -169,23 +171,6 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
     int f = fil, c = col;
 	Orientacion ori = current_state.brujula;
     for(int i = 0; i < sensores.terreno.size(); i++){
-        if(i==0){
-			if(situado){
-				if(mapaResultado[fil][col] != sensores.terreno[i]){
-					mapaResultado[fil][col] = sensores.terreno[i];
-					plan_bien_situado[fil][col] = valor_casilla(sensores.terreno[i]);
-				}else{
-					//plan_bien_situado[fil][col]++;
-				}
-			}else{
-				if(visto_sin_bien_situado[fil][col] != sensores.terreno[i]){
-					visto_sin_bien_situado[fil][col] = sensores.terreno[i];
-					plan_sin_bien_situado[fil][col] = valor_casilla(sensores.terreno[i]);
-				}else{
-					//plan_sin_bien_situado[fil][col]++;
-				}
-			}
-		} 
         if(ori == norte or ori == este or ori == sur or ori == oeste){
             if(i>=1 and i<4){
                 f = (ori == norte or ori == este)?(fil-1):(fil+1);
@@ -252,16 +237,16 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 		if(situado){
 			if(mapaResultado[f][c] != sensores.terreno[i]){
 				mapaResultado[f][c] = sensores.terreno[i];
+			}
+			if(plan_bien_situado[f][c] == 0){
 				plan_bien_situado[f][c] = valor_casilla(sensores.terreno[i]);
-			}else{
-				//plan_bien_situado[f][c]++;
 			}
 		}else{
 			if(visto_sin_bien_situado[f][c] != sensores.terreno[i]){
 				visto_sin_bien_situado[f][c] = sensores.terreno[i];
+			}
+			if(plan_sin_bien_situado[f][c] == 0){
 				plan_sin_bien_situado[f][c] = valor_casilla(sensores.terreno[i]);
-			}else{
-				//plan_sin_bien_situado[f][c]++;
 			}
 		}
 	}
