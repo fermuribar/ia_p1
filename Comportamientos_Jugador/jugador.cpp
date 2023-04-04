@@ -304,7 +304,7 @@ Action ComportamientoJugador::decide_accion(Sensores sensores){
 	}else{
 		if(sensores.superficie[2]!='_')
 			accion = actIDLE;
-		else if((sensores.terreno[0] == 'X' and sensores.bateria < 5000))
+		else if((sensores.terreno[0] == 'X' and sensores.bateria < 2500))
 			accion = actIDLE;
 		else 
 			accion = suma_puntuaciones();
