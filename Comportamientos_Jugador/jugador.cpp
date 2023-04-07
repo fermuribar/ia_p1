@@ -330,15 +330,19 @@ void ComportamientoJugador::marca_camino(){
 	switch (current_state.brujula)
 	{
 	case norte: case sur:
-		(bien_situado) ? plan_bien_situado[f][c-1]++ : plan_sin_bien_situado[f][c-1]++;
-		(bien_situado) ? plan_bien_situado[f][c+1]++ : plan_sin_bien_situado[f][c+1]++;
+		if((bien_situado) ? (mapaResultado[f+1][c-1] != 'M' or mapaResultado[f-1][c-1] != 'M') : (visto_sin_bien_situado[f+1][c-1] != 'M' or visto_sin_bien_situado[f-1][c-1] != 'M'))
+			(bien_situado) ? plan_bien_situado[f][c-1]++ : plan_sin_bien_situado[f][c-1]++;
+		if((bien_situado) ? (mapaResultado[f+1][c+1] != 'M' or mapaResultado[f-1][c+1] != 'M') : (visto_sin_bien_situado[f+1][c+1] != 'M' or visto_sin_bien_situado[f-1][c+1] != 'M'))	
+			(bien_situado) ? plan_bien_situado[f][c+1]++ : plan_sin_bien_situado[f][c+1]++;
 
 		l1=(bien_situado) ? mapaResultado[f][c-1] : visto_sin_bien_situado[f][c-1];
 		l2=(bien_situado) ? mapaResultado[f][c+1] : visto_sin_bien_situado[f][c+1];
 		break;
 	case este: case oeste:
-		(bien_situado) ? plan_bien_situado[f-1][c]++ : plan_sin_bien_situado[f-1][c]++;
-		(bien_situado) ? plan_bien_situado[f+1][c]++ : plan_sin_bien_situado[f+1][c]++;
+		if((bien_situado) ? (mapaResultado[f-1][c-1] != 'M' or mapaResultado[f-1][c+1] != 'M') : (visto_sin_bien_situado[f-1][c-1] != 'M' or visto_sin_bien_situado[f-1][c+1] != 'M'))
+			(bien_situado) ? plan_bien_situado[f-1][c]++ : plan_sin_bien_situado[f-1][c]++;
+		if((bien_situado) ? (mapaResultado[f+1][c-1] != 'M' or mapaResultado[f+1][c+1] != 'M') : (visto_sin_bien_situado[f+1][c-1] != 'M' or visto_sin_bien_situado[f-1][c+1] != 'M'))
+			(bien_situado) ? plan_bien_situado[f+1][c]++ : plan_sin_bien_situado[f+1][c]++;
 
 		l1=(bien_situado) ? mapaResultado[f-1][c] : visto_sin_bien_situado[f-1][c];
 		l2=(bien_situado) ? mapaResultado[f+1][c] : visto_sin_bien_situado[f+1][c];
