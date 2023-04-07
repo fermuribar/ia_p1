@@ -3,6 +3,55 @@
 using namespace std;
 
 /*
+----------------------------------------------CONSTRUCTOR Jugador---------------------------------------------------
+
+
+*/
+ComportamientoJugador::ComportamientoJugador(unsigned int size) : Comportamiento(size){
+      // Constructor de la clase
+      // Dar el valor inicial a las variables de 
+        //tutorial
+      current_state.fil = current_state.col = mapaResultado.size() - 1; // la posicion sin estar posicionado por defecto es en el centro del mapa visto_sin_bien_situado
+      current_state.brujula = norte;
+	  current_state.chanclas = current_state.bikini = false;
+      last_action = actIDLE;  
+      //giro_derecha = false;
+      bien_situado = false;
+        //fin tuto
+
+      //incicio mapas axiliares
+      vector<int> aux(mapaResultado.size(),0);
+      vector<unsigned char> aux1(mapaResultado.size() * 2, '?');
+      vector<int> aux2(mapaResultado.size() * 2, 0);
+      for( int i = 0;i < mapaResultado.size(); i++)  plan_bien_situado.push_back(aux);
+      for (size_t i = 0; i < mapaResultado.size() * 2; i++){
+        visto_sin_bien_situado.push_back(aux1);
+        plan_sin_bien_situado.push_back(aux2);
+      }
+
+      //defino el precipicio exteriror
+      for(int i = 0; i < mapaResultado.size(); i++){
+        //borde superiror
+        mapaResultado[0][i] = 'P';
+        mapaResultado[1][i] = 'P';
+        mapaResultado[2][i] = 'P';
+        //borde inferiror
+        mapaResultado[mapaResultado.size()-3][i] = 'P';
+        mapaResultado[mapaResultado.size()-2][i] = 'P';
+        mapaResultado[mapaResultado.size()-1][i] = 'P';
+        //borde izq
+        mapaResultado[i][0] = 'P';
+        mapaResultado[i][1] = 'P';
+        mapaResultado[i][2] = 'P';
+        //borde der
+        mapaResultado[i][mapaResultado.size()-3] = 'P';
+        mapaResultado[i][mapaResultado.size()-2] = 'P';
+        mapaResultado[i][mapaResultado.size()-1] = 'P';
+      }
+      
+    }
+
+/*
 ----------------------------------------------THINK---------------------------------------------------------------------------------------
 ->Metodo principal 
 -->Analisis y tratamiento de accion anterior y sensores
@@ -30,6 +79,17 @@ Action ComportamientoJugador::think(Sensores sensores){
 			bien_situado = true;
 		}
 
+		//encuentra chanclas
+		if(!current_state.bikini and sensores.terreno[0] == 'K'){
+			current_state.bikini = true;
+			//recalcula_mapas();
+		}
+		//encuentra bikini
+		if(!current_state.chanclas and sensores.terreno[0] == 'D'){
+			current_state.chanclas = true;
+			//recalcula_mapas();
+		}
+
 		// Actualizacion de mapaResultado
 		if(bien_situado){
 			act_mapas(sensores, true);
@@ -48,7 +108,9 @@ Action ComportamientoJugador::think(Sensores sensores){
 		bien_situado = false;
 		current_state.fil = current_state.col = mapaResultado.size() - 1; 
 		current_state.brujula = norte;
+		current_state.chanclas = current_state.bikini = false;
 		last_action = actIDLE;
+		//recalcula_mapas();
 		borra_visto();
 	}
 
@@ -139,13 +201,16 @@ int ComportamientoJugador::valor_casilla(unsigned char c){
 		valor = 2;
 		break;
 	case 'B':
-		valor = 4;
+		valor = (current_state.chanclas and false) ? 3 : 4;
 		break;
 	case 'A':
-		valor = 10;
+		valor = (current_state.bikini and false) ? 3 : 10;
 		break;
 	case 'M': case 'P':
 		valor = 10000;
+		break;
+	default:
+		valor = 0;
 		break;
 	}
 	return valor;
@@ -290,6 +355,23 @@ void ComportamientoJugador::marca_camino(){
 	}
 }
 
+void ComportamientoJugador::recalcula_mapas(){
+	if(!bien_situado){
+		for(int i = 0; i < visto_sin_bien_situado.size(); i++){
+			for(int j = 0; j < visto_sin_bien_situado.size(); j++){
+				if(visto_sin_bien_situado[i][j] == 'B' or visto_sin_bien_situado[i][j] == 'A')
+					plan_sin_bien_situado[i][j] = valor_casilla(visto_sin_bien_situado[i][j]);
+			}
+		}
+	}
+	for(int i = 0; i < mapaResultado.size(); i++){
+		for(int j = 0; j < mapaResultado.size(); j++){
+			if(visto_sin_bien_situado[i][j] == 'B' or visto_sin_bien_situado[i][j] == 'A')
+				plan_bien_situado[i][j] = valor_casilla(mapaResultado[i][j]);
+		}
+	}
+}
+
 
 /*
 ----------------------------------------------COMPORTAMIENTO---------------------------------------------------------------------------------------
@@ -384,9 +466,10 @@ Action ComportamientoJugador::suma_puntuaciones(){
 	return accion;
 }
 
- //Decide la accion a tomar
+//Decide la accion a tomar
 Action ComportamientoJugador::decide_accion(Sensores sensores){
 	Action accion;
+
 	if(sensores.terreno[0] != 'X'  and sensores.superficie[2]=='_'){
 		accion = suma_puntuaciones();
 	}else{
