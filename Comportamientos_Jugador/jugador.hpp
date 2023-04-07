@@ -77,9 +77,9 @@ class ComportamientoJugador : public Comportamiento{
   void marca_camino();
 
   
-
-  Action decide_accion(Sensores sensores);
   Action suma_puntuaciones();
+  Action decide_accion(Sensores sensores);
+  
   
   
   // Declarar aquí las variables de estado

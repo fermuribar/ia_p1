@@ -296,22 +296,6 @@ void ComportamientoJugador::marca_camino(){
 --->Decidir accion
 */
 
-//Decide la accion a tomar
-Action ComportamientoJugador::decide_accion(Sensores sensores){
-	Action accion;
-	if(sensores.terreno[0] != 'X'  and sensores.superficie[2]=='_'){
-		accion = suma_puntuaciones();
-	}else{
-		if(sensores.superficie[2]!='_')
-			accion = actIDLE;
-		else if((sensores.terreno[0] == 'X' and sensores.bateria < 2500))
-			accion = actIDLE;
-		else 
-			accion = suma_puntuaciones();
-	}
-	return accion;
-}
-
 Action ComportamientoJugador::suma_puntuaciones(){
 	int recto = 0, der_s = 0, izq_s = 0, der_l = 0, izq_l = 0;
 	int n = 0,ne = 0,e = 0,se = 0,s = 0,so = 0,o = 0, no = 0;
@@ -398,4 +382,20 @@ Action ComportamientoJugador::suma_puntuaciones(){
 	}
 	
 	return accion;
- }
+}
+
+ //Decide la accion a tomar
+Action ComportamientoJugador::decide_accion(Sensores sensores){
+	Action accion;
+	if(sensores.terreno[0] != 'X'  and sensores.superficie[2]=='_'){
+		accion = suma_puntuaciones();
+	}else{
+		if(sensores.superficie[2]!='_')
+			accion = (static_cast<double>(rand()) / RAND_MAX == 0) ? actTURN_SR : actTURN_SL;
+		else if((sensores.terreno[0] == 'X' and sensores.bateria < 2500))
+			accion = actIDLE;
+		else 
+			accion = suma_puntuaciones();
+	}
+	return accion;
+}
