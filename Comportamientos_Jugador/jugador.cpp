@@ -3,6 +3,55 @@
 using namespace std;
 
 /*
+----------------------------------------------CONSTRUCTOR Jugador---------------------------------------------------
+
+
+*/
+ComportamientoJugador::ComportamientoJugador(unsigned int size) : Comportamiento(size){
+      // Constructor de la clase
+      // Dar el valor inicial a las variables de 
+        //tutorial
+      current_state.fil = current_state.col = mapaResultado.size() - 1; // la posicion sin estar posicionado por defecto es en el centro del mapa visto_sin_bien_situado
+      current_state.brujula = norte;
+	  current_state.chanclas = current_state.bikini = false;
+      last_action = actIDLE;  
+      //giro_derecha = false;
+      bien_situado = false;
+        //fin tuto
+
+      //incicio mapas axiliares
+      vector<int> aux(mapaResultado.size(),0);
+      vector<unsigned char> aux1(mapaResultado.size() * 2, '?');
+      vector<int> aux2(mapaResultado.size() * 2, 0);
+      for( int i = 0;i < mapaResultado.size(); i++)  plan_bien_situado.push_back(aux);
+      for (size_t i = 0; i < mapaResultado.size() * 2; i++){
+        visto_sin_bien_situado.push_back(aux1);
+        plan_sin_bien_situado.push_back(aux2);
+      }
+
+      //defino el precipicio exteriror
+      for(int i = 0; i < mapaResultado.size(); i++){
+        //borde superiror
+        mapaResultado[0][i] = 'P';
+        mapaResultado[1][i] = 'P';
+        mapaResultado[2][i] = 'P';
+        //borde inferiror
+        mapaResultado[mapaResultado.size()-3][i] = 'P';
+        mapaResultado[mapaResultado.size()-2][i] = 'P';
+        mapaResultado[mapaResultado.size()-1][i] = 'P';
+        //borde izq
+        mapaResultado[i][0] = 'P';
+        mapaResultado[i][1] = 'P';
+        mapaResultado[i][2] = 'P';
+        //borde der
+        mapaResultado[i][mapaResultado.size()-3] = 'P';
+        mapaResultado[i][mapaResultado.size()-2] = 'P';
+        mapaResultado[i][mapaResultado.size()-1] = 'P';
+      }
+      
+    }
+
+/*
 ----------------------------------------------THINK---------------------------------------------------------------------------------------
 ->Metodo principal 
 -->Analisis y tratamiento de accion anterior y sensores
@@ -30,17 +79,38 @@ Action ComportamientoJugador::think(Sensores sensores){
 			bien_situado = true;
 		}
 
+		//encuentra chanclas
+		if(!current_state.bikini and sensores.terreno[0] == 'K'){
+			current_state.bikini = true;
+			//recalcula_mapas();
+		}
+		//encuentra bikini
+		if(!current_state.chanclas and sensores.terreno[0] == 'D'){
+			current_state.chanclas = true;
+			//recalcula_mapas();
+		}
+
 		// Actualizacion de mapaResultado
 		if(bien_situado){
 			act_mapas(sensores, true);
+			//plan_bien_situado[current_state.fil][current_state.col]++;
 		}else{
 			act_mapas(sensores, false);
+			//plan_sin_bien_situado[current_state.fil][current_state.col]++;
 		}
+
+		// Marca el camino por donde pasa
+		if(last_action == actFORWARD){
+			marca_camino();
+		}
+
 	}else if(sensores.reset){
 		bien_situado = false;
 		current_state.fil = current_state.col = mapaResultado.size() - 1; 
 		current_state.brujula = norte;
+		current_state.chanclas = current_state.bikini = false;
 		last_action = actIDLE;
+		//recalcula_mapas();
 		borra_visto();
 	}
 
@@ -65,8 +135,10 @@ int ComportamientoJugador::interact(Action accion, int valor){
 //Borra todo lo visto sin estar bien posicionado (en caso de muerte)
 void ComportamientoJugador::borra_visto(){
 	for(int i = 0; i < visto_sin_bien_situado.size(); i++)
-		for(int j = 0; j< visto_sin_bien_situado.size(); j++)
+		for(int j = 0; j< visto_sin_bien_situado.size(); j++){
 			visto_sin_bien_situado[i][j] = '?';
+			plan_sin_bien_situado[i][j] = 0;
+		}
 }
 
 //Actualiza la posicion en funcion de la orientacion y accion anterior
@@ -88,7 +160,6 @@ void ComportamientoJugador::act_posi(){
 				case suroeste: fil_tem++; col_tem--; break;
 				case oeste: col_tem--; break;
 				case noroeste: fil_tem--; col_tem--; break;
-			
 			}
 			break;
 		case actTURN_SL:
@@ -99,11 +170,11 @@ void ComportamientoJugador::act_posi(){
 			// Actualizacion en caso de girar 45º a la derecha
 			orientacion_tem = (orientacion_tem+1)%8;
 			break;
-		case actTURN_BL:
+		case actTURN_BR:
 			// Actualizacion en caso de girar 135º a la izquierda
 			orientacion_tem = (orientacion_tem+3)%8;
 			break;
-		case actTURN_BR:
+		case actTURN_BL: //change
 			// Actualizacion en caso de girar 135º a la derecha
 			orientacion_tem = (orientacion_tem+5)%8;
 			break;
@@ -117,32 +188,20 @@ void ComportamientoJugador::act_posi(){
 //Define la puntuacion de cada casilla solo basandose en el tipo de casilla
 int ComportamientoJugador::valor_casilla(unsigned char c){
 	int valor;
-	switch (c)
-	{
-	case 'G': case 'K': case 'D': case 'X':
-		valor = 1;
-		break;
-	case 'S':
-		valor = 10;
-		break;
-	case 'T':
-		valor = 11;
-		break;
-	case 'B':
-		valor = 1000;
-		break;
-	case 'A':
-		valor = 2000;
-		break;
-	case 'M': case 'P':
-		valor = 10000;
-		break;
+	switch (c){
+		case 'G': case 'K': case 'D': case 'X': valor = 1; break;
+		case 'S': valor = 1; break;
+		case 'T': valor = 2; break;
+		case 'B': valor = (current_state.chanclas and false) ? 3 : 4; break;
+		case 'A': valor = (current_state.bikini and false) ? 3 : 8; break;
+		case 'M': case 'P': valor = 10000; break;
+		default: valor = 0; break;
 	}
 	return valor;
 }
 
 //Plasma lo visto antes de posicionarse correctamente
-void ComportamientoJugador::act_visto(Sensores sensores){
+void ComportamientoJugador::act_visto(Sensores sensores){			
 	int diff_fil = current_state.fil - sensores.posF;
 	int diff_col = current_state.col - sensores.posC;
 	int tam_map = mapaResultado.size();
@@ -151,6 +210,10 @@ void ComportamientoJugador::act_visto(Sensores sensores){
 			if(visto_sin_bien_situado[i + diff_fil][j + diff_col] != '?'){
 				mapaResultado[i][j] = visto_sin_bien_situado[i + diff_fil][j + diff_col];
 				visto_sin_bien_situado[i + diff_fil][j + diff_col] = '?';
+			}
+			if(plan_sin_bien_situado[i+diff_fil][j+diff_col] != 0){
+				plan_bien_situado[i][j] = plan_sin_bien_situado[i + diff_fil][j + diff_col];
+				plan_sin_bien_situado[i + diff_fil][j + diff_col] = 0;
 			}
 		}
 		
@@ -163,23 +226,6 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
     int f = fil, c = col;
 	Orientacion ori = current_state.brujula;
     for(int i = 0; i < sensores.terreno.size(); i++){
-        if(i==0){
-			if(situado){
-				if(mapaResultado[fil][col] != sensores.terreno[i]){
-					mapaResultado[fil][col] = sensores.terreno[i];
-					mapaConPlan[fil][col] = valor_casilla(sensores.terreno[i]);
-				}else{
-					mapaConPlan[fil][col]++;
-				}
-			}else{
-				if(visto_sin_bien_situado[fil][col] != sensores.terreno[i]){
-					visto_sin_bien_situado[fil][col] = sensores.terreno[i];
-					plan_sin_bien_situado[fil][col] = valor_casilla(sensores.terreno[i]);
-				}else{
-					plan_sin_bien_situado[fil][col]++;
-				}
-			}
-		} 
         if(ori == norte or ori == este or ori == sur or ori == oeste){
             if(i>=1 and i<4){
                 f = (ori == norte or ori == este)?(fil-1):(fil+1);
@@ -246,22 +292,111 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 		if(situado){
 			if(mapaResultado[f][c] != sensores.terreno[i]){
 				mapaResultado[f][c] = sensores.terreno[i];
-				mapaConPlan[f][c] = valor_casilla(sensores.terreno[i]);
-			}else{
-				mapaConPlan[f][c]++;
+			}
+			if(plan_bien_situado[f][c] == 0){
+				plan_bien_situado[f][c] = valor_casilla(sensores.terreno[i]);
 			}
 		}else{
 			if(visto_sin_bien_situado[f][c] != sensores.terreno[i]){
 				visto_sin_bien_situado[f][c] = sensores.terreno[i];
+			}
+			if(plan_sin_bien_situado[f][c] == 0){
 				plan_sin_bien_situado[f][c] = valor_casilla(sensores.terreno[i]);
-			}else{
-				plan_sin_bien_situado[f][c]++;
 			}
 		}
 	}
 }
 
+void ComportamientoJugador::marca_camino(){
+	int f = current_state.fil, c = current_state.col;
+	unsigned char l1 , l2;
+	
+	switch (current_state.brujula)
+	{
+	case norte: case sur:
+		if((bien_situado) ? ((mapaResultado[f+1][c-1] != 'M' or mapaResultado[f-1][c-1] != 'M') and (mapaResultado[f+1][c-1] != 'P' or mapaResultado[f-1][c-1] != 'P')) : 
+		((visto_sin_bien_situado[f+1][c-1] != 'M' or visto_sin_bien_situado[f-1][c-1] != 'M') and (visto_sin_bien_situado[f+1][c-1] != 'P' or visto_sin_bien_situado[f-1][c-1] != 'P')))
+			(bien_situado) ? plan_bien_situado[f][c-1]++ : plan_sin_bien_situado[f][c-1]++;
+		if((bien_situado) ? ((mapaResultado[f+1][c+1] != 'M' or mapaResultado[f-1][c+1] != 'M') and (mapaResultado[f+1][c+1] != 'P' or mapaResultado[f-1][c+1] != 'P')) : 
+		((visto_sin_bien_situado[f+1][c+1] != 'M' or visto_sin_bien_situado[f-1][c+1] != 'M') and (visto_sin_bien_situado[f+1][c+1] != 'P' or visto_sin_bien_situado[f-1][c+1] != 'P')))	
+			(bien_situado) ? plan_bien_situado[f][c+1]++ : plan_sin_bien_situado[f][c+1]++;
 
+		l1=(bien_situado) ? mapaResultado[f][c-1] : visto_sin_bien_situado[f][c-1];
+		l2=(bien_situado) ? mapaResultado[f][c+1] : visto_sin_bien_situado[f][c+1];
+		break;
+	case este: case oeste:
+		if((bien_situado) ? ((mapaResultado[f-1][c-1] != 'M' or mapaResultado[f-1][c+1] != 'M') and (mapaResultado[f-1][c-1] != 'P' or mapaResultado[f-1][c+1] != 'P')) : 
+		((visto_sin_bien_situado[f-1][c-1] != 'M' or visto_sin_bien_situado[f-1][c+1] != 'M') and (visto_sin_bien_situado[f-1][c-1] != 'P' or visto_sin_bien_situado[f-1][c+1] != 'P')))
+			(bien_situado) ? plan_bien_situado[f-1][c]++ : plan_sin_bien_situado[f-1][c]++;
+		if((bien_situado) ? (mapaResultado[f+1][c-1] != 'M' or mapaResultado[f+1][c+1] != 'M') : (visto_sin_bien_situado[f+1][c-1] != 'M' or visto_sin_bien_situado[f-1][c+1] != 'M'))
+			(bien_situado) ? plan_bien_situado[f+1][c]++ : plan_sin_bien_situado[f+1][c]++;
+
+		l1=(bien_situado) ? mapaResultado[f-1][c] : visto_sin_bien_situado[f-1][c];
+		l2=(bien_situado) ? mapaResultado[f+1][c] : visto_sin_bien_situado[f+1][c];
+		break;
+	case noreste:
+		(bien_situado) ? plan_bien_situado[f][c-1]++ : plan_sin_bien_situado[f][c-1]++;
+		(bien_situado) ? plan_bien_situado[f+1][c]++ : plan_sin_bien_situado[f+1][c]++;
+
+		l1=(bien_situado) ? mapaResultado[f][c-1] : visto_sin_bien_situado[f][c-1];
+		l2=(bien_situado) ? mapaResultado[f+1][c] : visto_sin_bien_situado[f+1][c];
+		break;
+	case sureste:
+		(bien_situado) ? plan_bien_situado[f][c-1]++ : plan_sin_bien_situado[f][c-1]++;
+		(bien_situado) ? plan_bien_situado[f-1][c]++ : plan_sin_bien_situado[f-1][c]++;
+
+		l1=(bien_situado) ? mapaResultado[f][c-1] : visto_sin_bien_situado[f][c-1];
+		l2=(bien_situado) ? mapaResultado[f-1][c] : visto_sin_bien_situado[f-1][c];
+		break;
+	case suroeste:
+		(bien_situado) ? plan_bien_situado[f][c+1]++ : plan_sin_bien_situado[f][c+1]++;
+		(bien_situado) ? plan_bien_situado[f-1][c]++ : plan_sin_bien_situado[f-1][c]++;
+
+		l1=(bien_situado) ? mapaResultado[f][c+1] : visto_sin_bien_situado[f][c+1];
+		l2=(bien_situado) ? mapaResultado[f-1][c] : visto_sin_bien_situado[f-1][c];
+		break;
+	case noroeste:
+		(bien_situado) ? plan_bien_situado[f][c+1]++ : plan_sin_bien_situado[f][c+1]++;
+		(bien_situado) ? plan_bien_situado[f+1][c]++ : plan_sin_bien_situado[f+1][c]++;
+
+		l1=(bien_situado) ? mapaResultado[f][c+1] : visto_sin_bien_situado[f][c+1];
+		l2=(bien_situado) ? mapaResultado[f+1][c] : visto_sin_bien_situado[f+1][c];
+		break;
+	}
+	if((l1 != 'M' or l2 != 'M') and (l1 != 'P' or l2 != 'P'))
+		(bien_situado) ? plan_bien_situado[f][c]++ : plan_sin_bien_situado[f][c]++;
+
+}
+
+void ComportamientoJugador::recalcula_mapas(){
+	if(!bien_situado){
+		for(int i = 0; i < visto_sin_bien_situado.size(); i++){
+			for(int j = 0; j < visto_sin_bien_situado.size(); j++){
+				if(visto_sin_bien_situado[i][j] == 'B' or visto_sin_bien_situado[i][j] == 'A')
+					plan_sin_bien_situado[i][j] = valor_casilla(visto_sin_bien_situado[i][j]);
+			}
+		}
+	}
+	for(int i = 0; i < mapaResultado.size(); i++){
+		for(int j = 0; j < mapaResultado.size(); j++){
+			if(visto_sin_bien_situado[i][j] == 'B' or visto_sin_bien_situado[i][j] == 'A')
+				plan_bien_situado[i][j] = valor_casilla(mapaResultado[i][j]);
+		}
+	}
+}
+
+
+int ComportamientoJugador::busca_casilla_vision(Sensores sensores, unsigned char c){
+	int pos = -1;
+	int tam = sensores.terreno.size();
+	for(int i = 0; i < tam; i++){
+		if(sensores.terreno[i] == c){
+			pos = i;
+			i = tam;
+		}
+	}
+	return pos;
+}
 
 
 /*
@@ -269,198 +404,86 @@ void ComportamientoJugador::act_mapas(Sensores sensores, bool situado){
 --->Decidir accion
 */
 
-//Decide la accion a tomar
-Action ComportamientoJugador::decide_accion(Sensores sensores){
-	Action accion;
-	if((sensores.terreno[2]!='M' and sensores.terreno[2]!='P') and sensores.superficie[2]=='_'){
-		accion = suma_puntuaciones();
-	}else{
-		accion = actTURN_SL;
-	}
-	return accion;
-}
-
 Action ComportamientoJugador::suma_puntuaciones(){
 	int recto = 0, der_s = 0, izq_s = 0, der_l = 0, izq_l = 0;
-	int n = 0,ne = 0,e = 0,se = 0,s = 0,so = 0,o = 0,no = 0;
-	int f,c;
+	int n = 0,ne = 0,e = 0,se = 0,s = 0,so = 0,o = 0, no = 0;
+	int f = current_state.fil, c = current_state.col;
 	Action accion;
-
-	//suma norte
-	f=current_state.fil-1;
-	c=current_state.col;
-	for(int i = 0; i < 10; i++){
-		if (f>=0)
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
-				n += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i=20;
-		f--;
-	}
-
-	//suma noreste
-	f=current_state.fil-1;
-	c=current_state.col+1;
-	for(int i = 0; i < 10; i++){
-		if(f>=0 and  (bien_situado) ? c < mapaConPlan.size() : c < plan_sin_bien_situado.size())
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') ) )
-				ne += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		f--;
-		c++;
-	}
-
-	//suma este
-	f=current_state.fil;
-	c=current_state.col+1;
-	for(int i = 0; i < 10; i++){
-		if((bien_situado) ? c<mapaConPlan.size() : c<plan_sin_bien_situado.size()  )
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') ) )
-				e += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i=20;
-		c++;
-	}
-
-	//suma sureste
-	f=current_state.fil+1;
-	c=current_state.col+1;
-	for(int i = 0; i < 10; i++){
-		if ( ((bien_situado) ? f<mapaConPlan.size() : f<plan_sin_bien_situado.size()) and ((bien_situado) ? c<mapaConPlan.size() : c<plan_sin_bien_situado.size()) )
-			if( ( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
-				se += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		f++;
-		c++;
-	}
-
-	//suma sur
-	f=current_state.fil+1;
-	c=current_state.col;
-	for(int i = 0; i < 10; i++){
-		if((bien_situado) ? f<mapaConPlan.size() : f<plan_sin_bien_situado.size() )
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') ) )
-				s += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		f++;
-	}
-
-	//suroeste
-	f=current_state.fil+1;
-	c=current_state.col-1;
-	for(int i = 0; i < 10; i++){
-		if((bien_situado) ? f<mapaConPlan.size() : f<plan_sin_bien_situado.size() and c>=0)
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
-				so += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		f++;
-		c--;
-	}
-
-	//oeste
-	f=current_state.fil;
-	c=current_state.col-1;
-	for(int i = 0; i < 10; i++){
-		if(c>=0)
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
-				o += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		c--;
-	}
-
-	//noroeste
-	f=current_state.fil-1;
-	c=current_state.col-1;
-	for(int i = 0; i < 10; i++){
-		if(f>=0 and c>=0)
-			if(( (bien_situado) ? (mapaResultado[f][c] != 'M' and mapaResultado[f][c] != 'P') : (plan_sin_bien_situado[f][c] != 'M' and plan_sin_bien_situado[f][c] != 'P') )  )
-				no += (bien_situado) ? mapaConPlan[f][c] : plan_sin_bien_situado[f][c];
-			else
-				i = 20; //apaga bucle
-		else i = 20;
-		f--;
-		c--;
-	}
+	n = (bien_situado) ? plan_bien_situado[f - 1][c]: plan_sin_bien_situado[f - 1][c];
+	ne = (bien_situado) ? plan_bien_situado[f - 1][c + 1]: plan_sin_bien_situado[f - 1][c + 1];
+	e = (bien_situado) ? plan_bien_situado[f][c + 1]: plan_sin_bien_situado[f][c + 1];
+	se = (bien_situado) ? plan_bien_situado[f + 1][c + 1]: plan_sin_bien_situado[f + 1][c + 1];
+	s = (bien_situado) ? plan_bien_situado[f + 1][c]: plan_sin_bien_situado[f + 1][c];
+	so = (bien_situado) ? plan_bien_situado[f + 1][c - 1]: plan_sin_bien_situado[f + 1][c - 1];
+	o = (bien_situado) ? plan_bien_situado[f][c - 1]: plan_sin_bien_situado[f][c - 1];
+	no = (bien_situado) ? plan_bien_situado[f - 1][c - 1]: plan_sin_bien_situado[f - 1][c - 1];
+	
 	switch (current_state.brujula){
-	case norte:
-		recto = n;
-		der_s = ne;
-		izq_s = no;
-		der_l = se;
-		izq_l = so;
-		break;
-	case noreste:
-		recto = no;
-		der_s = e;
-		izq_s = n;
-		der_l = s;
-		izq_l = o;
-		break;
-	case este:
-		recto = e;
-		der_s = se;
-		izq_s = ne;
-		der_l = so;
-		izq_l = no;
-		break;
-	case sureste:
-		recto = se;
-		der_s = s;
-		izq_s = e;
-		der_l = o;
-		izq_l = n;
-		break;
-	case sur:
-		recto = s;
-		der_s = so;
-		izq_s = se;
-		der_l = no;
-		izq_l = ne;
-		break;
-	case suroeste:
-		recto = so;
-		der_s = o;
-		izq_s = e;
-		der_l = n;
-		izq_l = e;
-		break;
-	case oeste:
-		recto = o;
-		der_s = no;
-		izq_s = so;
-		der_l = ne;
-		izq_l = se;
-		break;
-	case noroeste:
-		recto = no;
-		der_s = n;
-		izq_s = o;
-		der_l = e;
-		izq_l = s;
-		break;
+		case norte: recto = n; der_s = ne; izq_s = no; der_l = se; izq_l = so; break;
+		case noreste: recto = ne; der_s = e; izq_s = n; der_l = s; izq_l = o; break;
+		case este: recto = e; der_s = se; izq_s = ne; der_l = so; izq_l = no; break;
+		case sureste: recto = se; der_s = s; izq_s = e; der_l = o; izq_l = n; break;
+		case sur: recto = s; der_s = so; izq_s = se; der_l = no; izq_l = ne; break;
+		case suroeste: recto = so; der_s = o; izq_s = s; der_l = n; izq_l = e; break;
+		case oeste: recto = o; der_s = no; izq_s = so; der_l = ne; izq_l = se; break;
+		case noroeste: recto = no; der_s = n; izq_s = o; der_l = e; izq_l = s; break;
 	}
-	if(recto >= der_s and recto >= izq_s and recto >= der_l and recto >= izq_l){
+
+	if(recto <= der_s and recto <= izq_s and recto <= der_l and recto <= izq_l){
 		accion = actFORWARD;
-	}else if(der_s >= izq_s and der_s >= der_l and der_s>= izq_l){
+	}else if(der_s <= izq_s and der_s <= der_l and der_s <= izq_l){
 		accion = actTURN_SR;
-	}else if( izq_s >= der_l and izq_s >= izq_l){
+	}else if(izq_s <= der_l and izq_s <= izq_l){
 		accion = actTURN_SL;
-	}else if(der_l >= izq_l){
+	}else if(der_l <= izq_l){
 		accion = actTURN_BR;
 	}else{
 		accion = actTURN_BL;
 	}
+	
 	return accion;
- }
+}
+
+//Decide la accion a tomar
+Action ComportamientoJugador::decide_accion(Sensores sensores){
+	Action accion;
+	int pos_X = busca_casilla_vision(sensores,'X');
+	int pos_G = busca_casilla_vision(sensores,'G');
+	int pos_M = busca_casilla_vision(sensores,'M');
+	int pos_P = busca_casilla_vision(sensores,'P');
+	if(sensores.terreno[0] != 'X'  and sensores.superficie[2]=='_'){
+		
+		if(!bien_situado and pos_G != -1){
+
+			if(pos_G == 1 or pos_G == 4 or pos_G == 9){
+				accion = actTURN_SL;
+			}else if(pos_G == 3 or pos_G == 8 or pos_G == 15){
+				accion = actTURN_SR;
+			}else{
+				accion = actFORWARD;
+			}
+
+		}else if(sensores.bateria < 2500 and pos_X != -1){
+
+			if(pos_X == 1 or pos_X == 4 or pos_X == 9){
+				accion = actTURN_SL;
+			}else if(pos_X == 3 or pos_X == 8 or pos_X == 15){
+				accion = actTURN_SR;
+			}else{
+				accion = actFORWARD;
+			}
+
+		}else 
+			accion = suma_puntuaciones();
+		
+	}else{
+
+		if(sensores.superficie[2]!='_')
+			accion = (static_cast<double>(rand()) / RAND_MAX == 0) ? actTURN_SR : actTURN_SL;
+		else if((sensores.terreno[0] == 'X' and sensores.bateria < 2500))
+			accion = actIDLE;
+		else 
+			accion = suma_puntuaciones();
+	}
+	return accion;
+}
