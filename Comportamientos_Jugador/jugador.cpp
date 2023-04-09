@@ -82,21 +82,19 @@ Action ComportamientoJugador::think(Sensores sensores){
 		//encuentra chanclas
 		if(!current_state.bikini and sensores.terreno[0] == 'K'){
 			current_state.bikini = true;
-			//recalcula_mapas();
+			recalcula_mapas();
 		}
 		//encuentra bikini
 		if(!current_state.chanclas and sensores.terreno[0] == 'D'){
 			current_state.chanclas = true;
-			//recalcula_mapas();
+			recalcula_mapas();
 		}
 
 		// Actualizacion de mapaResultado
 		if(bien_situado){
 			act_mapas(sensores, true);
-			//plan_bien_situado[current_state.fil][current_state.col]++;
 		}else{
 			act_mapas(sensores, false);
-			//plan_sin_bien_situado[current_state.fil][current_state.col]++;
 		}
 
 		// Marca el camino por donde pasa
@@ -110,7 +108,7 @@ Action ComportamientoJugador::think(Sensores sensores){
 		current_state.brujula = norte;
 		current_state.chanclas = current_state.bikini = false;
 		last_action = actIDLE;
-		//recalcula_mapas();
+		recalcula_mapas();
 		borra_visto();
 	}
 
@@ -192,8 +190,8 @@ int ComportamientoJugador::valor_casilla(unsigned char c){
 		case 'G': case 'K': case 'D': case 'X': valor = 1; break;
 		case 'S': valor = 1; break;
 		case 'T': valor = 2; break;
-		case 'B': valor = (current_state.chanclas and false) ? 3 : 4; break;
-		case 'A': valor = (current_state.bikini and false) ? 3 : 8; break;
+		case 'B': valor = (current_state.chanclas /*and false*/) ? 4 : 4; break;
+		case 'A': valor = (current_state.bikini /*and false*/) ? 7 : 9; break;
 		case 'M': case 'P': valor = 10000; break;
 		default: valor = 0; break;
 	}
@@ -372,14 +370,14 @@ void ComportamientoJugador::recalcula_mapas(){
 	if(!bien_situado){
 		for(int i = 0; i < visto_sin_bien_situado.size(); i++){
 			for(int j = 0; j < visto_sin_bien_situado.size(); j++){
-				if(visto_sin_bien_situado[i][j] == 'B' or visto_sin_bien_situado[i][j] == 'A')
+				if((visto_sin_bien_situado[i][j] == 'B' or visto_sin_bien_situado[i][j] == 'A'))
 					plan_sin_bien_situado[i][j] = valor_casilla(visto_sin_bien_situado[i][j]);
 			}
 		}
 	}
 	for(int i = 0; i < mapaResultado.size(); i++){
 		for(int j = 0; j < mapaResultado.size(); j++){
-			if(visto_sin_bien_situado[i][j] == 'B' or visto_sin_bien_situado[i][j] == 'A')
+			if((visto_sin_bien_situado[i][j] == 'B' or visto_sin_bien_situado[i][j] == 'A'))
 				plan_bien_situado[i][j] = valor_casilla(mapaResultado[i][j]);
 		}
 	}
@@ -447,13 +445,15 @@ Action ComportamientoJugador::suma_puntuaciones(){
 //Decide la accion a tomar
 Action ComportamientoJugador::decide_accion(Sensores sensores){
 	Action accion;
-	int pos_X = busca_casilla_vision(sensores,'X');
-	int pos_G = busca_casilla_vision(sensores,'G');
-	int pos_M = busca_casilla_vision(sensores,'M');
-	int pos_P = busca_casilla_vision(sensores,'P');
+	int pos_X = busca_casilla_vision(sensores,'X');	//encuentra cargador
+	int pos_G = busca_casilla_vision(sensores,'G');	//encuentra posicionamiento
+	int pos_M = busca_casilla_vision(sensores,'M');	//encuentra muro
+	int pos_P = busca_casilla_vision(sensores,'P');	//encuentra precipicio
+	int pos_K = busca_casilla_vision(sensores,'K'); //encuentra bikini
+	int pos_D = busca_casilla_vision(sensores,'D'); //encuentra chanclas
 	if(sensores.terreno[0] != 'X'  and sensores.superficie[2]=='_'){
 		
-		if(!bien_situado and pos_G != -1){
+		if(!bien_situado and pos_G != -1 and pos_M == -1 /*and pos_P == -1*/){ //quito la comprobacion de precipicio sabiendo que puede morir ya que va guiado hacia el objetivo
 
 			if(pos_G == 1 or pos_G == 4 or pos_G == 9){
 				accion = actTURN_SL;
@@ -463,11 +463,31 @@ Action ComportamientoJugador::decide_accion(Sensores sensores){
 				accion = actFORWARD;
 			}
 
-		}else if(sensores.bateria < 2500 and pos_X != -1){
+		}else if(sensores.bateria < 2500 and pos_X != -1 and pos_M == -1 /*and pos_P == -1*/){ //quito la comprobacion de precipicio sabiendo que puede morir ya que va guiado hacia el objetivo
 
 			if(pos_X == 1 or pos_X == 4 or pos_X == 9){
 				accion = actTURN_SL;
 			}else if(pos_X == 3 or pos_X == 8 or pos_X == 15){
+				accion = actTURN_SR;
+			}else{
+				accion = actFORWARD;
+			}
+		
+		}else if(!current_state.chanclas and pos_D != -1 and pos_M == -1 and pos_P == -1){ 
+
+			if(pos_D == 1 or pos_D == 4 or pos_D == 9){
+				accion = actTURN_SL;
+			}else if(pos_D == 3 or pos_D == 8 or pos_D == 15){
+				accion = actTURN_SR;
+			}else{
+				accion = actFORWARD;
+			}
+		
+		}else if(!current_state.bikini and pos_K != -1 and pos_M == -1 and pos_P == -1){ 
+
+			if(pos_K == 1 or pos_K == 4 or pos_K == 9){
+				accion = actTURN_SL;
+			}else if(pos_K == 3 or pos_K == 8 or pos_K == 15){
 				accion = actTURN_SR;
 			}else{
 				accion = actFORWARD;
