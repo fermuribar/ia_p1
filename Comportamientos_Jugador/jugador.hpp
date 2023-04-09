@@ -5,13 +5,11 @@
 #include <stack>
 using namespace std;
 
-  //tutorial
 struct state{
   int fil, col;
   Orientacion brujula;
   bool chanclas, bikini;
 };
-
 
 class ComportamientoJugador : public Comportamiento{
 
@@ -40,27 +38,18 @@ class ComportamientoJugador : public Comportamiento{
 
   int busca_casilla_vision(Sensores sensores, unsigned char c);
 
-  
   Action suma_puntuaciones();
   Action decide_accion(Sensores sensores);
   
-  
-  
   // Declarar aquí las variables de estado
-
-    //tutorial:
   state current_state;
   Action last_action;
-  //bool giro_derecha;
-  bool bien_situado;
-    //fint tuto
 
+  bool bien_situado;
   
   vector< vector<int> > plan_bien_situado;
   vector< vector<unsigned char> > visto_sin_bien_situado;
   vector< vector<int> > plan_sin_bien_situado;
-  
-
 };
 
 #endif

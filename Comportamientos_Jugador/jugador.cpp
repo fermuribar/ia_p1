@@ -160,7 +160,6 @@ void ComportamientoJugador::act_posi(){
 				case suroeste: fil_tem++; col_tem--; break;
 				case oeste: col_tem--; break;
 				case noroeste: fil_tem--; col_tem--; break;
-			
 			}
 			break;
 		case actTURN_SL:
@@ -189,29 +188,14 @@ void ComportamientoJugador::act_posi(){
 //Define la puntuacion de cada casilla solo basandose en el tipo de casilla
 int ComportamientoJugador::valor_casilla(unsigned char c){
 	int valor;
-	switch (c)
-	{
-	case 'G': case 'K': case 'D': case 'X':
-		valor = 1;
-		break;
-	case 'S':
-		valor = 1;
-		break;
-	case 'T':
-		valor = 2;
-		break;
-	case 'B':
-		valor = (current_state.chanclas and false) ? 3 : 4;
-		break;
-	case 'A':
-		valor = (current_state.bikini and false) ? 3 : 8;
-		break;
-	case 'M': case 'P':
-		valor = 10000;
-		break;
-	default:
-		valor = 0;
-		break;
+	switch (c){
+		case 'G': case 'K': case 'D': case 'X': valor = 1; break;
+		case 'S': valor = 1; break;
+		case 'T': valor = 2; break;
+		case 'B': valor = (current_state.chanclas and false) ? 3 : 4; break;
+		case 'A': valor = (current_state.bikini and false) ? 3 : 8; break;
+		case 'M': case 'P': valor = 10000; break;
+		default: valor = 0; break;
 	}
 	return valor;
 }
@@ -330,16 +314,19 @@ void ComportamientoJugador::marca_camino(){
 	switch (current_state.brujula)
 	{
 	case norte: case sur:
-		if((bien_situado) ? (mapaResultado[f+1][c-1] != 'M' or mapaResultado[f-1][c-1] != 'M') : (visto_sin_bien_situado[f+1][c-1] != 'M' or visto_sin_bien_situado[f-1][c-1] != 'M'))
+		if((bien_situado) ? ((mapaResultado[f+1][c-1] != 'M' or mapaResultado[f-1][c-1] != 'M') and (mapaResultado[f+1][c-1] != 'P' or mapaResultado[f-1][c-1] != 'P')) : 
+		((visto_sin_bien_situado[f+1][c-1] != 'M' or visto_sin_bien_situado[f-1][c-1] != 'M') and (visto_sin_bien_situado[f+1][c-1] != 'P' or visto_sin_bien_situado[f-1][c-1] != 'P')))
 			(bien_situado) ? plan_bien_situado[f][c-1]++ : plan_sin_bien_situado[f][c-1]++;
-		if((bien_situado) ? (mapaResultado[f+1][c+1] != 'M' or mapaResultado[f-1][c+1] != 'M') : (visto_sin_bien_situado[f+1][c+1] != 'M' or visto_sin_bien_situado[f-1][c+1] != 'M'))	
+		if((bien_situado) ? ((mapaResultado[f+1][c+1] != 'M' or mapaResultado[f-1][c+1] != 'M') and (mapaResultado[f+1][c+1] != 'P' or mapaResultado[f-1][c+1] != 'P')) : 
+		((visto_sin_bien_situado[f+1][c+1] != 'M' or visto_sin_bien_situado[f-1][c+1] != 'M') and (visto_sin_bien_situado[f+1][c+1] != 'P' or visto_sin_bien_situado[f-1][c+1] != 'P')))	
 			(bien_situado) ? plan_bien_situado[f][c+1]++ : plan_sin_bien_situado[f][c+1]++;
 
 		l1=(bien_situado) ? mapaResultado[f][c-1] : visto_sin_bien_situado[f][c-1];
 		l2=(bien_situado) ? mapaResultado[f][c+1] : visto_sin_bien_situado[f][c+1];
 		break;
 	case este: case oeste:
-		if((bien_situado) ? (mapaResultado[f-1][c-1] != 'M' or mapaResultado[f-1][c+1] != 'M') : (visto_sin_bien_situado[f-1][c-1] != 'M' or visto_sin_bien_situado[f-1][c+1] != 'M'))
+		if((bien_situado) ? ((mapaResultado[f-1][c-1] != 'M' or mapaResultado[f-1][c+1] != 'M') and (mapaResultado[f-1][c-1] != 'P' or mapaResultado[f-1][c+1] != 'P')) : 
+		((visto_sin_bien_situado[f-1][c-1] != 'M' or visto_sin_bien_situado[f-1][c+1] != 'M') and (visto_sin_bien_situado[f-1][c-1] != 'P' or visto_sin_bien_situado[f-1][c+1] != 'P')))
 			(bien_situado) ? plan_bien_situado[f-1][c]++ : plan_sin_bien_situado[f-1][c]++;
 		if((bien_situado) ? (mapaResultado[f+1][c-1] != 'M' or mapaResultado[f+1][c+1] != 'M') : (visto_sin_bien_situado[f+1][c-1] != 'M' or visto_sin_bien_situado[f-1][c+1] != 'M'))
 			(bien_situado) ? plan_bien_situado[f+1][c]++ : plan_sin_bien_situado[f+1][c]++;
@@ -376,7 +363,7 @@ void ComportamientoJugador::marca_camino(){
 		l2=(bien_situado) ? mapaResultado[f+1][c] : visto_sin_bien_situado[f+1][c];
 		break;
 	}
-	if(l1 != 'M' or l2 != 'M')
+	if((l1 != 'M' or l2 != 'M') and (l1 != 'P' or l2 != 'P'))
 		(bien_situado) ? plan_bien_situado[f][c]++ : plan_sin_bien_situado[f][c]++;
 
 }
@@ -430,64 +417,16 @@ Action ComportamientoJugador::suma_puntuaciones(){
 	so = (bien_situado) ? plan_bien_situado[f + 1][c - 1]: plan_sin_bien_situado[f + 1][c - 1];
 	o = (bien_situado) ? plan_bien_situado[f][c - 1]: plan_sin_bien_situado[f][c - 1];
 	no = (bien_situado) ? plan_bien_situado[f - 1][c - 1]: plan_sin_bien_situado[f - 1][c - 1];
-	switch (current_state.brujula)
-	{
-	case norte:
-		recto = n;
-		der_s = ne;
-		izq_s = no;
-		der_l = se;
-		izq_l = so;
-		break;
-	case noreste:
-		recto = ne;
-		der_s = e;
-		izq_s = n;
-		der_l = s;
-		izq_l = o;
-		break;
-	case este:
-		recto = e;
-		der_s = se;
-		izq_s = ne;
-		der_l = so;
-		izq_l = no;
-		break;
-	case sureste:
-		recto = se;
-		der_s = s;
-		izq_s = e;
-		der_l = o;
-		izq_l = n;
-		break;
-	case sur:
-		recto = s;
-		der_s = so;
-		izq_s = se;
-		der_l = no;
-		izq_l = ne;
-		break;
-	case suroeste:
-		recto = so;
-		der_s = o;
-		izq_s = s;
-		der_l = n;
-		izq_l = e;
-		break;
-	case oeste:
-		recto = o;
-		der_s = no;
-		izq_s = so;
-		der_l = ne;
-		izq_l = se;
-		break;
-	case noroeste:
-		recto = no;
-		der_s = n;
-		izq_s = o;
-		der_l = e;
-		izq_l = s;
-		break;
+	
+	switch (current_state.brujula){
+		case norte: recto = n; der_s = ne; izq_s = no; der_l = se; izq_l = so; break;
+		case noreste: recto = ne; der_s = e; izq_s = n; der_l = s; izq_l = o; break;
+		case este: recto = e; der_s = se; izq_s = ne; der_l = so; izq_l = no; break;
+		case sureste: recto = se; der_s = s; izq_s = e; der_l = o; izq_l = n; break;
+		case sur: recto = s; der_s = so; izq_s = se; der_l = no; izq_l = ne; break;
+		case suroeste: recto = so; der_s = o; izq_s = s; der_l = n; izq_l = e; break;
+		case oeste: recto = o; der_s = no; izq_s = so; der_l = ne; izq_l = se; break;
+		case noroeste: recto = no; der_s = n; izq_s = o; der_l = e; izq_l = s; break;
 	}
 
 	if(recto <= der_s and recto <= izq_s and recto <= der_l and recto <= izq_l){
@@ -515,6 +454,7 @@ Action ComportamientoJugador::decide_accion(Sensores sensores){
 	if(sensores.terreno[0] != 'X'  and sensores.superficie[2]=='_'){
 		
 		if(!bien_situado and pos_G != -1){
+
 			if(pos_G == 1 or pos_G == 4 or pos_G == 9){
 				accion = actTURN_SL;
 			}else if(pos_G == 3 or pos_G == 8 or pos_G == 15){
@@ -522,7 +462,9 @@ Action ComportamientoJugador::decide_accion(Sensores sensores){
 			}else{
 				accion = actFORWARD;
 			}
-		} else if(sensores.bateria < 2500 and pos_X != -1){
+
+		}else if(sensores.bateria < 2500 and pos_X != -1){
+
 			if(pos_X == 1 or pos_X == 4 or pos_X == 9){
 				accion = actTURN_SL;
 			}else if(pos_X == 3 or pos_X == 8 or pos_X == 15){
@@ -530,10 +472,12 @@ Action ComportamientoJugador::decide_accion(Sensores sensores){
 			}else{
 				accion = actFORWARD;
 			}
-		}else
+
+		}else 
 			accion = suma_puntuaciones();
 		
 	}else{
+
 		if(sensores.superficie[2]!='_')
 			accion = (static_cast<double>(rand()) / RAND_MAX == 0) ? actTURN_SR : actTURN_SL;
 		else if((sensores.terreno[0] == 'X' and sensores.bateria < 2500))
