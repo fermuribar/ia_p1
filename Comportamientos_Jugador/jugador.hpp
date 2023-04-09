@@ -38,6 +38,8 @@ class ComportamientoJugador : public Comportamiento{
 
   void recalcula_mapas();
 
+  int busca_casilla_vision(Sensores sensores, unsigned char c);
+
   
   Action suma_puntuaciones();
   Action decide_accion(Sensores sensores);
@@ -58,7 +60,6 @@ class ComportamientoJugador : public Comportamiento{
   vector< vector<unsigned char> > visto_sin_bien_situado;
   vector< vector<int> > plan_sin_bien_situado;
   
-  stack<int> pila_fil, pila_col;
 
 };
 

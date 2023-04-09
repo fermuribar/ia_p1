@@ -204,7 +204,7 @@ int ComportamientoJugador::valor_casilla(unsigned char c){
 		valor = (current_state.chanclas and false) ? 3 : 4;
 		break;
 	case 'A':
-		valor = (current_state.bikini and false) ? 3 : 10;
+		valor = (current_state.bikini and false) ? 3 : 8;
 		break;
 	case 'M': case 'P':
 		valor = 10000;
@@ -399,6 +399,19 @@ void ComportamientoJugador::recalcula_mapas(){
 }
 
 
+int ComportamientoJugador::busca_casilla_vision(Sensores sensores, unsigned char c){
+	int pos = -1;
+	int tam = sensores.terreno.size();
+	for(int i = 0; i < tam; i++){
+		if(sensores.terreno[i] == c){
+			pos = i;
+			i = tam;
+		}
+	}
+	return pos;
+}
+
+
 /*
 ----------------------------------------------COMPORTAMIENTO---------------------------------------------------------------------------------------
 --->Decidir accion
@@ -495,9 +508,31 @@ Action ComportamientoJugador::suma_puntuaciones(){
 //Decide la accion a tomar
 Action ComportamientoJugador::decide_accion(Sensores sensores){
 	Action accion;
-
+	int pos_X = busca_casilla_vision(sensores,'X');
+	int pos_G = busca_casilla_vision(sensores,'G');
+	int pos_M = busca_casilla_vision(sensores,'M');
+	int pos_P = busca_casilla_vision(sensores,'P');
 	if(sensores.terreno[0] != 'X'  and sensores.superficie[2]=='_'){
-		accion = suma_puntuaciones();
+		
+		if(!bien_situado and pos_G != -1){
+			if(pos_G == 1 or pos_G == 4 or pos_G == 9){
+				accion = actTURN_SL;
+			}else if(pos_G == 3 or pos_G == 8 or pos_G == 15){
+				accion = actTURN_SR;
+			}else{
+				accion = actFORWARD;
+			}
+		} else if(sensores.bateria < 2500 and pos_X != -1){
+			if(pos_X == 1 or pos_X == 4 or pos_X == 9){
+				accion = actTURN_SL;
+			}else if(pos_X == 3 or pos_X == 8 or pos_X == 15){
+				accion = actTURN_SR;
+			}else{
+				accion = actFORWARD;
+			}
+		}else
+			accion = suma_puntuaciones();
+		
 	}else{
 		if(sensores.superficie[2]!='_')
 			accion = (static_cast<double>(rand()) / RAND_MAX == 0) ? actTURN_SR : actTURN_SL;
