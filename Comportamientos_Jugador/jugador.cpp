@@ -453,7 +453,7 @@ Action ComportamientoJugador::decide_accion(Sensores sensores){
 	int pos_D = busca_casilla_vision(sensores,'D'); //encuentra chanclas
 	if(sensores.terreno[0] != 'X'  and sensores.superficie[2]=='_'){
 		
-		if(!bien_situado and pos_G != -1 and pos_M == -1 /*and pos_P == -1*/){ //quito la comprobacion de precipicio sabiendo que puede morir ya que va guiado hacia el objetivo
+		if(!bien_situado and pos_G != -1 and pos_M == -1 and pos_P == -1){ 
 
 			if(pos_G == 1 or pos_G == 4 or pos_G == 9){
 				accion = actTURN_SL;
@@ -463,7 +463,7 @@ Action ComportamientoJugador::decide_accion(Sensores sensores){
 				accion = actFORWARD;
 			}
 
-		}else if(sensores.bateria < 2500 and pos_X != -1 and pos_M == -1 /*and pos_P == -1*/){ //quito la comprobacion de precipicio sabiendo que puede morir ya que va guiado hacia el objetivo
+		}else if(sensores.bateria < 2500 and pos_X != -1 and pos_M == -1 and pos_P == -1){ 
 
 			if(pos_X == 1 or pos_X == 4 or pos_X == 9){
 				accion = actTURN_SL;
