@@ -1,5 +1,6 @@
 #include "../Comportamientos_Jugador/jugador.hpp"
 #include <iostream>
+#include <math.h>
 using namespace std;
 
 /*
@@ -180,7 +181,7 @@ int ComportamientoJugador::valor_casilla(unsigned char c){
 		case 'G': case 'K': case 'D': case 'X': valor = 1; break;
 		case 'S': valor = 1; break;
 		case 'T': valor = 2; break;
-		case 'B': valor = (current_state.chanclas ) ? 4 : 4; break;
+		case 'B': valor = (current_state.chanclas ) ? 4 : 4; break; //esta puntuacion es la que mas beneficia la leaderboard | no creo que sea la mas optima
 		case 'A': valor = (current_state.bikini ) ? 7 : 9; break;
 		case 'M': case 'P': valor = 10000; break;
 		default: valor = 0; break;
@@ -405,9 +406,13 @@ void ComportamientoJugador::borra_visto(){
 //funcion que calcula que accion tomar en funcion de las puntuaciones de las casillas proximas
 Action ComportamientoJugador::suma_puntuaciones(){
 	int recto = 0, der_s = 0, izq_s = 0, der_l = 0, izq_l = 0; //puntuaciones de las casillas delante derecha izquier ..
-	int n = 0,ne = 0,e = 0,se = 0,s = 0,so = 0,o = 0, no = 0; //las puntuaciones de todas mis casillas ayacentes
+	int n = 0,ne = 0,e = 0,se = 0,s = 0,so = 0,o = 0, no = 0; //las puntuaciones de todas mis casillas adyacentes
+	int recto_0 = 0, der_s_0 = 0, izq_s_0 = 0, der_l_0 = 0, izq_l_0 = 0;
+	int n_0 = 0,ne_0 = 0,e_0 = 0,se_0 = 0,s_0 = 0,so_0 = 0,o_0 = 0, no_0 = 0; //obtiene el numero de casillas sin descubrir en dicha direccion
 	int f = current_state.fil, c = current_state.col;
+	int tam = plan_sin_bien_situado.size(); 
 	Action accion;
+	//obtiene las puntuaciones de las casillas adyacentes
 	n = (bien_situado) ? plan_bien_situado[f - 1][c]: plan_sin_bien_situado[f - 1][c];
 	ne = (bien_situado) ? plan_bien_situado[f - 1][c + 1]: plan_sin_bien_situado[f - 1][c + 1];
 	e = (bien_situado) ? plan_bien_situado[f][c + 1]: plan_sin_bien_situado[f][c + 1];
@@ -416,25 +421,49 @@ Action ComportamientoJugador::suma_puntuaciones(){
 	so = (bien_situado) ? plan_bien_situado[f + 1][c - 1]: plan_sin_bien_situado[f + 1][c - 1];
 	o = (bien_situado) ? plan_bien_situado[f][c - 1]: plan_sin_bien_situado[f][c - 1];
 	no = (bien_situado) ? plan_bien_situado[f - 1][c - 1]: plan_sin_bien_situado[f - 1][c - 1];
+
+	//obtenemos numeros de 0 por cada orientacion
+	for(int i = 1; i < sqrt(tam*tam + tam*tam); i++){
+		if(f - i > 0 ){
+			(bien_situado) ? ((plan_bien_situado[f - i][c] == 0) ? n_0++ : n_0): ((plan_sin_bien_situado[f - i][c] == 0) ? n_0++ : n_0 );
+			if( (bien_situado? c + i < tam/2 : c + i < tam ))
+				(bien_situado) ? ((plan_bien_situado[f - i][c + i] == 0) ? ne_0++ : ne_0): ((plan_sin_bien_situado[f - i][c + i] == 0) ? ne_0++ : ne_0 );
+			if(c - i > 0)
+				(bien_situado) ? ((plan_bien_situado[f - i][c - i] == 0) ? no_0++ : no_0): ((plan_sin_bien_situado[f - i][c - i] == 0) ? no_0++ : no_0 );
+		}
+		if( (bien_situado? f + i < tam/2 : f + i < tam )){
+			if( (bien_situado? c + i < tam/2 : c + i < tam ))
+				(bien_situado) ? ((plan_bien_situado[f + i][c + i] == 0) ? se_0++ : se_0): ((plan_sin_bien_situado[f + i][c + i] == 0) ? se_0++ : se_0 );
+			(bien_situado) ? ((plan_bien_situado[f + i][c] == 0) ? s_0++ : s_0): ((plan_sin_bien_situado[f + i][c] == 0) ? s_0++ : s_0 );
+			if(c - i > 0)
+				(bien_situado) ? ((plan_bien_situado[f + i][c - i] == 0) ? so_0++ : so_0): ((plan_sin_bien_situado[f + i][c - i] == 0) ? so_0++ : so_0 );
+		}
+		if( (bien_situado? c + i < tam/2 : c + i < tam ))
+			(bien_situado) ? ((plan_bien_situado[f][c + i] == 0) ? e_0++ : e_0): ((plan_sin_bien_situado[f][c + i] == 0) ? e_0++ : e_0 );
+		if(c - i > 0)
+			(bien_situado) ? ((plan_bien_situado[f][c - i] == 0) ? o_0++ : o_0): ((plan_sin_bien_situado[f][c - i] == 0) ? o_0++ : o_0 );
+		
+		
+	}
 	
 	switch (current_state.brujula){ //calculo de las casillas delante derecha izquierda ..
-		case norte: recto = n; der_s = ne; izq_s = no; der_l = se; izq_l = so; break;
-		case noreste: recto = ne; der_s = e; izq_s = n; der_l = s; izq_l = o; break;
-		case este: recto = e; der_s = se; izq_s = ne; der_l = so; izq_l = no; break;
-		case sureste: recto = se; der_s = s; izq_s = e; der_l = o; izq_l = n; break;
-		case sur: recto = s; der_s = so; izq_s = se; der_l = no; izq_l = ne; break;
-		case suroeste: recto = so; der_s = o; izq_s = s; der_l = n; izq_l = e; break;
-		case oeste: recto = o; der_s = no; izq_s = so; der_l = ne; izq_l = se; break;
-		case noroeste: recto = no; der_s = n; izq_s = o; der_l = e; izq_l = s; break;
+		case norte: recto = n; der_s = ne; izq_s = no; der_l = se; izq_l = so; recto_0 = n_0; der_s_0= ne_0; izq_s_0 = no_0; der_l_0 = se_0; izq_l_0 = so_0; break;
+		case noreste: recto = ne; der_s = e; izq_s = n; der_l = s; izq_l = o; recto_0 = ne_0; der_s_0 = e_0; izq_s_0 = n_0; der_l_0 = s_0; izq_l_0 = o_0; break;
+		case este: recto = e; der_s = se; izq_s = ne; der_l = so; izq_l = no; recto_0 = e_0; der_s_0 = se_0; izq_s_0 = ne_0; der_l_0 = so_0; izq_l_0 = no_0; break;
+		case sureste: recto = se; der_s = s; izq_s = e; der_l = o; izq_l = n; recto_0 = se_0; der_s_0 = s_0; izq_s_0 = e_0; der_l_0 = o_0; izq_l_0 = n_0; break;
+		case sur: recto = s; der_s = so; izq_s = se; der_l = no; izq_l = ne; recto_0 = s_0; der_s_0 = so_0; izq_s_0 = se_0; der_l_0 = no_0; izq_l_0 = ne_0; break;
+		case suroeste: recto = so; der_s = o; izq_s = s; der_l = n; izq_l = e; recto_0 = so_0; der_s_0 = o_0; izq_s_0 = s_0; der_l_0 = n_0; izq_l_0 = e_0; break;
+		case oeste: recto = o; der_s = no; izq_s = so; der_l = ne; izq_l = se; recto_0 = o_0; der_s_0 = no_0; izq_s_0 = so_0; der_l_0 = ne_0; izq_l_0 = se_0; break;
+		case noroeste: recto = no; der_s = n; izq_s = o; der_l = e; izq_l = s; recto_0 = no_0; der_s_0 = n_0; izq_s_0 = o_0; der_l_0= e; izq_l_0 = s_0; break;
 	}
 
-	if(recto <= der_s and recto <= izq_s and recto <= der_l and recto <= izq_l){ //toma de decision en funcion de las puntuaciones
+	if(recto - recto_0 <= der_s - der_s_0 and recto - recto_0 <= izq_s - izq_s_0 and recto - recto_0 <= der_l - der_l_0 and recto - recto_0 <= izq_l - izq_l_0){ //toma de decision en funcion de las puntuaciones
 		accion = actFORWARD;
-	}else if(der_s <= izq_s and der_s <= der_l and der_s <= izq_l){
+	}else if(der_s - der_s_0 <= izq_s - izq_s_0 and der_s - der_s_0 <= der_l - der_l_0 and der_s - der_s_0 <= izq_l - izq_l_0){
 		accion = actTURN_SR;
-	}else if(izq_s <= der_l and izq_s <= izq_l){
+	}else if(izq_s - izq_s_0 <= der_l - der_l_0 and izq_s - izq_s_0 <= izq_l - izq_l_0){
 		accion = actTURN_SL;
-	}else if(der_l <= izq_l){
+	}else if(der_l - der_l_0 <= izq_l - izq_l_0){
 		accion = actTURN_BR;
 	}else{
 		accion = actTURN_BL;
@@ -464,7 +493,7 @@ Action ComportamientoJugador::decide_accion(Sensores sensores){
 				accion = actFORWARD;
 			}
 
-		}else if(sensores.bateria < 2500 and pos_X != -1 and pos_M == -1 and pos_P == -1){ //comprueba si existe casilla de carga y si me hace falta
+		}else if(sensores.bateria < 1500 and pos_X != -1 and pos_M == -1 and pos_P == -1){ //comprueba si existe casilla de carga y si me hace falta
 			//llegada ha la casilla
 			if(pos_X == 1 or pos_X == 4 or pos_X == 9){
 				accion = actTURN_SL;
