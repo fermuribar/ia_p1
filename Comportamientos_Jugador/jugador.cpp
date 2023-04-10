@@ -456,6 +456,7 @@ Action ComportamientoJugador::suma_puntuaciones(){
 		case oeste: recto = o; der_s = no; izq_s = so; der_l = ne; izq_l = se; recto_0 = o_0; der_s_0 = no_0; izq_s_0 = so_0; der_l_0 = ne_0; izq_l_0 = se_0; break;
 		case noroeste: recto = no; der_s = n; izq_s = o; der_l = e; izq_l = s; recto_0 = no_0; der_s_0 = n_0; izq_s_0 = o_0; der_l_0= e; izq_l_0 = s_0; break;
 	}
+//fatalllllll------------------------------------------------------
 
 	if(recto - recto_0 <= der_s - der_s_0 and recto - recto_0 <= izq_s - izq_s_0 and recto - recto_0 <= der_l - der_l_0 and recto - recto_0 <= izq_l - izq_l_0){ //toma de decision en funcion de las puntuaciones
 		accion = actFORWARD;
